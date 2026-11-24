@@ -49,5 +49,5 @@ export function hasRealArt(productId: string): boolean {
 }
 
 export function getProductImagePath(productId: string): string {
-  return `/products/${productId}.png`;
+  return `${import.meta.env.BASE_URL}products/${productId}.png`;
 }
