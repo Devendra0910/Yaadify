@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.asset-backups
+.claude/settings.local.json
+android
+ios

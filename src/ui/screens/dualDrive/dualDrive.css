@@ -1,0 +1,109 @@
+.dd-root {
+  position: absolute;
+  inset: 0;
+}
+
+.dd-tier-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.dd-tier-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  border: 2px solid #d9ded6;
+  background: var(--color-card-dim);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.dd-tier-btn strong {
+  font-size: 15px;
+}
+
+.dd-tier-btn span {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.dd-tier-btn--active {
+  border-color: var(--color-accent);
+  background: rgba(242, 169, 58, 0.14);
+}
+
+.dd-tutorial-card,
+.dd-pause-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 320px;
+  width: 100%;
+}
+
+.dd-tutorial-card p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.dd-countdown {
+  font-size: 96px;
+  font-weight: 900;
+  color: white;
+}
+
+.dd-game-screen {
+  position: absolute;
+  inset: 0;
+  background: #0e3a20;
+}
+
+.dd-canvas {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+
+.dd-pause-btn {
+  position: absolute;
+  top: calc(var(--safe-top) + 12px);
+  right: calc(var(--safe-right) + 12px);
+}
+
+.dd-results {
+  max-width: 320px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dd-fail-reason {
+  margin: -6px 0 4px;
+  opacity: 0.75;
+  font-size: 14px;
+}
+
+.dd-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.dd-stats-grid small {
+  display: block;
+  opacity: 0.65;
+  font-size: 12px;
+}
+
+.dd-stats-grid strong {
+  font-size: 20px;
+}
