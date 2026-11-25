@@ -2,13 +2,6 @@ import { useEffect, useRef } from "react";
 import { useTimeDetectiveRun, type TimeDetectiveRunStats } from "../../../game/systems/useTimeDetectiveRun";
 import { PauseMenu } from "../PauseMenu";
 
-function formatClock(seconds: number): string {
-  const s = Math.max(0, Math.ceil(seconds));
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${r.toString().padStart(2, "0")}`;
-}
-
 export interface TimeDetectiveRunResult {
   score: number;
   level: number;
@@ -73,8 +66,7 @@ export function TimeDetectiveGameScreen({
   return (
     <div className="overlay td-game-overlay">
       <div className="td-hud">
-        <div className="hud-top">
-          <div className={`hud-pill ${engine.sessionTimeLeft <= 10 ? "hud-pill--warn" : ""}`}>⏱ {formatClock(engine.sessionTimeLeft)}</div>
+        <div className="hud-top" style={{ justifyContent: "flex-end" }}>
           <div className="hud-top-buttons">
             <button className="hud-icon-btn" onClick={engine.pause} disabled={answersDisabled} aria-label="Pause">
               ⏸
@@ -121,7 +113,7 @@ export function TimeDetectiveGameScreen({
       {engine.phase === "roundResult" ? (
         <div className="td-next-wrap">
           <button className="btn btn--primary btn--block" onClick={engine.advance}>
-            Next ▶
+            {engine.lastResult === "wrong" ? "See Results ▶" : "Next ▶"}
           </button>
         </div>
       ) : (

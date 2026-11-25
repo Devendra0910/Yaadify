@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { applyAnswer, generateRound, SESSION_SECONDS, type TimeDetectiveRound, type TimeDetectiveSide } from "./timeDetectiveEngine";
+import { applyAnswer, generateRound, type TimeDetectiveRound, type TimeDetectiveSide } from "./timeDetectiveEngine";
 import { TimeDetectiveSave } from "./TimeDetectiveSave";
 import { SoundManager } from "./SoundManager";
 
@@ -32,7 +32,6 @@ export function useTimeDetectiveRun() {
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [streak, setStreak] = useState(0);
-  const [sessionTimeLeft, setSessionTimeLeft] = useState(SESSION_SECONDS);
   const [attempted, setAttempted] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
@@ -51,7 +50,7 @@ export function useTimeDetectiveRun() {
   const missesRef = useRef<TimeDetectiveMiss[]>([]);
   const roundRef = useRef<TimeDetectiveRound | null>(null);
   const answeredRef = useRef(false);
-  const sessionTimeRef = useRef(SESSION_SECONDS);
+  const lastResultRef = useRef<"correct" | "wrong" | null>(null);
   const stageTimeoutRef = useRef<number | null>(null);
   const prevPhaseRef = useRef<TimeDetectivePhase>("playing");
   const phaseRef = useRef<TimeDetectivePhase>("idle");
@@ -104,7 +103,7 @@ export function useTimeDetectiveRun() {
     correctRef.current = 0;
     wrongRef.current = 0;
     missesRef.current = [];
-    sessionTimeRef.current = SESSION_SECONDS;
+    lastResultRef.current = null;
 
     setScore(0);
     setLevel(1);
@@ -112,7 +111,6 @@ export function useTimeDetectiveRun() {
     setAttempted(0);
     setCorrectCount(0);
     setWrongCount(0);
-    setSessionTimeLeft(SESSION_SECONDS);
     setLastPointsDelta(0);
     nextRound();
   }, [nextRound]);
@@ -141,6 +139,7 @@ export function useTimeDetectiveRun() {
         streakRef.current += 1;
         setStreak(streakRef.current);
         bestStreakRef.current = Math.max(bestStreakRef.current, streakRef.current);
+        lastResultRef.current = "correct";
         setLastResult("correct");
         SoundManager.pickupCorrect();
       } else {
@@ -149,6 +148,7 @@ export function useTimeDetectiveRun() {
         streakRef.current = 0;
         setStreak(0);
         missesRef.current = [...missesRef.current, { durationAMs: r.durationAMs, durationBMs: r.durationBMs, picked, correct: r.correct }];
+        lastResultRef.current = "wrong";
         setLastResult("wrong");
         SoundManager.pickupWrong();
       }
@@ -158,11 +158,12 @@ export function useTimeDetectiveRun() {
     [],
   );
 
-  /** Called by the "Next" button — the player controls the pace of a round
-   * result instead of it auto-advancing on a timer. */
+  /** Called by the "Next" / "See Results" button — a wrong answer ends the
+   * run outright (survival mode, no timer); a correct one just moves on,
+   * at whatever pace the player wants. */
   const advance = useCallback(() => {
     if (phaseRef.current !== "roundResult") return;
-    if (sessionTimeRef.current <= 0) {
+    if (lastResultRef.current === "wrong") {
       endRun();
       return;
     }
@@ -179,21 +180,6 @@ export function useTimeDetectiveRun() {
     if (phaseRef.current !== "paused") return;
     setPhase(prevPhaseRef.current);
   }, []);
-
-  // The single session countdown — ticks through the brief roundResult
-  // pause too, so a 60s run is a real 60 seconds of wall time.
-  useEffect(() => {
-    if (phase !== "playing" && phase !== "roundResult") return;
-    const id = window.setInterval(() => {
-      sessionTimeRef.current = Math.max(0, sessionTimeRef.current - 0.1);
-      setSessionTimeLeft(sessionTimeRef.current);
-      if (sessionTimeRef.current <= 0) {
-        window.clearInterval(id);
-        endRun();
-      }
-    }, 100);
-    return () => window.clearInterval(id);
-  }, [phase, endRun]);
 
   useEffect(() => clearStageTimeout, []);
 
@@ -216,7 +202,6 @@ export function useTimeDetectiveRun() {
     lastPointsDelta,
     lastPicked,
     isNewBest,
-    sessionTimeLeft,
     stats,
     startRun,
     answer,

@@ -20,7 +20,7 @@ export function TimeDetectiveHome({
         <span className="emoji">⏳</span>
         <h1 className="title-xl">Time Detective</h1>
         <p className="subtitle" style={{ color: "rgba(255,255,255,0.85)" }}>
-          Two flashes, one lasts longer. No clock to watch — just your gut sense of time.
+          Two flashes, one lasts longer. No clock to watch, no time limit — just one wrong guess ends the run.
         </p>
       </div>
 

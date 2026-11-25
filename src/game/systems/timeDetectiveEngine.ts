@@ -4,7 +4,6 @@
 // No stated target duration exists anywhere, so there's nothing an external
 // stopwatch could usefully time against.
 
-export const SESSION_SECONDS = 60;
 export const MIN_LEVEL = 1;
 
 const BASE_DURATION_MS = 5000;
