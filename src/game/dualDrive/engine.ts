@@ -45,13 +45,12 @@ export interface Difficulty {
   switchChance: number;
   dualChance: number;
   squareOnlyChance: number;
-  /** Points a circle is worth while this difficulty is in effect — starts
-   * at 1 and climbs toward COIN_VALUE_CAP as speed ramps up with score. */
+  /** Points a circle is worth while this difficulty is in effect:
+   * max(1, floor(sqrt(score))) — starts at 1 and climbs without a cap. */
   coinValue: number;
 }
 
 interface BaseDifficulty {
-  speed: number;
   minGapSame: number;
   minGapSwitch: number;
   switchChance: number;
@@ -61,35 +60,41 @@ interface BaseDifficulty {
 
 /** The single starting difficulty — gaps are sized (relative to speed) so
  * only about 1-2 objects are ever visible on a lane at once, rather than a
- * dense field of them. */
-const BASE_DIFFICULTY: BaseDifficulty = { speed: 0.09, minGapSame: 4800, minGapSwitch: 5600, switchChance: 0.18, dualChance: 0.03, squareOnlyChance: 0.1 };
+ * dense field of them. (Speed itself no longer lives here — see
+ * `speedFor` below.) */
+const BASE_DIFFICULTY: BaseDifficulty = { minGapSame: 4800, minGapSwitch: 5600, switchChance: 0.18, dualChance: 0.03, squareOnlyChance: 0.1 };
 
-/** The ceiling difficulty ramps toward — still keeps roughly 1-2 objects
- * visible at once (gaps shrink more slowly than speed grows), and never
- * drops below a human-reactable minimum gap. */
-const HARD_CAP: BaseDifficulty = { speed: 0.16, minGapSame: 2000, minGapSwitch: 2500, switchChance: 0.4, dualChance: 0.15, squareOnlyChance: 0.18 };
+/** The ceiling the gap/frequency knobs ramp toward — still keeps roughly
+ * 1-2 objects visible at once, and never drops below a human-reactable
+ * minimum gap. */
+const HARD_CAP: BaseDifficulty = { minGapSame: 2000, minGapSwitch: 2500, switchChance: 0.4, dualChance: 0.15, squareOnlyChance: 0.18 };
 
-/** Score at which difficulty fully reaches the hard cap. */
+/** Score at which the gap/frequency knobs fully reach the hard cap. (Speed
+ * and coin value follow their own formulas below and are never capped.) */
 const RAMP_SCORE = 100;
 
-/** The highest a circle's point value ever climbs to, reached alongside the
- * hard cap. Circles start out worth 1 point each. */
-const COIN_VALUE_CAP = 4;
+/** speed = SPEED_K * sqrt(100 + score) — chosen so speed at score 0 matches
+ * the previous starting feel (0.09 px/ms), then grows with the square root
+ * of score instead of linearly ramping to a fixed cap. */
+const SPEED_K = 0.009;
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
 export function resolveDifficulty(score: number): Difficulty {
-  const t = Math.min(1, Math.max(0, score) / RAMP_SCORE);
+  const safeScore = Math.max(0, score);
+  const t = Math.min(1, safeScore / RAMP_SCORE);
   return {
-    speed: lerp(BASE_DIFFICULTY.speed, HARD_CAP.speed, t),
+    speed: SPEED_K * Math.sqrt(100 + safeScore),
     minGapSame: lerp(BASE_DIFFICULTY.minGapSame, HARD_CAP.minGapSame, t),
     minGapSwitch: lerp(BASE_DIFFICULTY.minGapSwitch, HARD_CAP.minGapSwitch, t),
     switchChance: lerp(BASE_DIFFICULTY.switchChance, HARD_CAP.switchChance, t),
     dualChance: lerp(BASE_DIFFICULTY.dualChance, HARD_CAP.dualChance, t),
     squareOnlyChance: lerp(BASE_DIFFICULTY.squareOnlyChance, HARD_CAP.squareOnlyChance, t),
-    coinValue: 1 + Math.floor(t * (COIN_VALUE_CAP - 1) * (1 + 1e-9)),
+    // Coins start at 1 point and climb with the square root of score, with
+    // no upper cap.
+    coinValue: Math.max(1, Math.floor(Math.sqrt(safeScore))),
   };
 }
 

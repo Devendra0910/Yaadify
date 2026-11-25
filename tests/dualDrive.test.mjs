@@ -43,7 +43,7 @@ test("a road never schedules two mandatory shapes in the same row", () => {
   }
 });
 
-test("difficulty ramps smoothly with score and always stays within the hard cap", () => {
+test("speed and gaps ramp smoothly with score; gaps cap but speed never does", () => {
   const steps = [];
   for (let score = 0; score <= 200; score += 5) steps.push(resolveDifficulty(score));
   for (let i = 1; i < steps.length; i++) {
@@ -51,7 +51,18 @@ test("difficulty ramps smoothly with score and always stays within the hard cap"
     assert.ok(steps[i].minGapSwitch <= steps[i - 1].minGapSwitch + 1e-9, "gaps should never widen as score rises");
   }
   const capped = resolveDifficulty(10_000);
-  assert.ok(capped.minGapSwitch >= 600, "the cap never drops below a human-reactable minimum");
+  assert.ok(capped.minGapSwitch >= 600, "the gap cap never drops below a human-reactable minimum");
+  // speed = k * sqrt(100 + score) is uncapped by design — it should keep
+  // climbing well past the score at which gaps have already capped out.
+  assert.ok(capped.speed > resolveDifficulty(100).speed * 1.3, "speed keeps growing past where gaps stop shrinking");
+});
+
+test("speed follows speed = k * sqrt(100 + score) exactly", () => {
+  const k = resolveDifficulty(0).speed / Math.sqrt(100);
+  for (const score of [0, 1, 50, 100, 500, 10_000]) {
+    const expected = k * Math.sqrt(100 + score);
+    assert.ok(Math.abs(resolveDifficulty(score).speed - expected) < 1e-9, `score ${score}`);
+  }
 });
 
 test("at the base difficulty, consecutive same-lane gaps keep at most ~1-2 objects visible on a typical screen", () => {
@@ -156,19 +167,18 @@ test("scoring accuracy: a perfect run accumulates an integer score with no doubl
   assert.ok(Number.isInteger(final.score));
 });
 
-test("a coin's value is locked in at spawn and starts at 1, climbing toward the cap with score", () => {
-  const low = resolveDifficulty(0);
-  const mid = resolveDifficulty(50);
-  const high = resolveDifficulty(100);
-  const veryHigh = resolveDifficulty(1000);
-  assert.equal(low.coinValue, 1);
-  assert.ok(mid.coinValue >= low.coinValue);
-  assert.equal(high.coinValue, 4);
-  assert.equal(veryHigh.coinValue, 4); // never exceeds the cap
+test("a coin's value follows max(1, floor(sqrt(score))), locked in at spawn, with no cap", () => {
+  const cases = [[0, 1], [1, 1], [3, 1], [4, 2], [8, 2], [9, 3], [15, 3], [16, 4], [99, 9], [100, 10], [10_000, 100]];
+  for (const [score, expected] of cases) {
+    assert.equal(resolveDifficulty(score).coinValue, expected, `score ${score}`);
+  }
+  // Monotonically non-decreasing, and genuinely uncapped at high scores.
+  assert.ok(resolveDifficulty(1_000_000).coinValue >= 999);
 
+  const high = resolveDifficulty(100);
   const gen = createRoadGen(123);
   const event = generateNextEvent(gen, high);
-  assert.equal(event.coinValue, 4);
+  assert.equal(event.coinValue, 10);
 });
 
 test("collecting a circle awards its own locked-in coinValue, not a flat 1 point", () => {
