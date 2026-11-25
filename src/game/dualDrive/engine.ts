@@ -63,17 +63,17 @@ interface TierBase {
 /** Starting points per chosen tier — "mostly one decision at a time" for
  * easy, both roads needing attention for medium, frequent switches for hard. */
 const TIER_BASE: Record<Tier, TierBase> = {
-  easy: { speed: 0.14, minGapSame: 1100, minGapSwitch: 1500, switchChance: 0.25, dualChance: 0.05, squareOnlyChance: 0.15 },
-  medium: { speed: 0.20, minGapSame: 850, minGapSwitch: 1150, switchChance: 0.45, dualChance: 0.2, squareOnlyChance: 0.25 },
-  hard: { speed: 0.26, minGapSame: 650, minGapSwitch: 900, switchChance: 0.6, dualChance: 0.35, squareOnlyChance: 0.3 },
+  easy: { speed: 0.09, minGapSame: 1300, minGapSwitch: 1800, switchChance: 0.18, dualChance: 0.03, squareOnlyChance: 0.1 },
+  medium: { speed: 0.13, minGapSame: 1000, minGapSwitch: 1350, switchChance: 0.35, dualChance: 0.15, squareOnlyChance: 0.18 },
+  hard: { speed: 0.17, minGapSame: 800, minGapSwitch: 1050, switchChance: 0.5, dualChance: 0.28, squareOnlyChance: 0.22 },
 };
 
 /** The ceiling every tier ramps toward — difficulty keeps climbing smoothly
  * with score but never goes below a human-reactable minimum gap. */
-const HARD_CAP: TierBase = { speed: 0.34, minGapSame: 480, minGapSwitch: 620, switchChance: 0.68, dualChance: 0.45, squareOnlyChance: 0.35 };
+const HARD_CAP: TierBase = { speed: 0.22, minGapSame: 550, minGapSwitch: 700, switchChance: 0.55, dualChance: 0.35, squareOnlyChance: 0.28 };
 
 /** Score at which difficulty fully reaches the hard cap, regardless of starting tier. */
-const RAMP_SCORE = 60;
+const RAMP_SCORE = 100;
 
 /** The highest a circle's point value ever climbs to, reached alongside the
  * hard cap. Circles start out worth 1 point each. */
@@ -166,9 +166,12 @@ export function generateNextEvent(state: RoadGenState, difficulty: Difficulty): 
   return event;
 }
 
-/** How far ahead (ms) the schedule is always kept generated, so rendering
- * never runs out of upcoming objects. */
-const HORIZON_MS = 4000;
+/** How far ahead (ms) the schedule is always kept generated. Tripled from
+ * the original 4000ms so a freshly spawned object's on-screen position
+ * (carY - horizon*speed) starts beyond the top edge of the screen instead
+ * of popping in partway down it — especially now that lower speeds cover
+ * less pixel distance for the same time horizon. */
+const HORIZON_MS = 12000;
 /** How long a resolved event is kept around before being purged, so a
  * collected/avoided shape can still render its fade-out briefly. */
 const LOOKBACK_MS = 600;

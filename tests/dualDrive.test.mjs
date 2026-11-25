@@ -158,9 +158,9 @@ test("scoring accuracy: a perfect run accumulates an integer score with no doubl
 
 test("a coin's value is locked in at spawn and starts at 1, climbing toward the cap with score", () => {
   const low = resolveDifficulty("easy", 0);
-  const mid = resolveDifficulty("easy", 30);
-  const high = resolveDifficulty("easy", 60);
-  const veryHigh = resolveDifficulty("easy", 500);
+  const mid = resolveDifficulty("easy", 50);
+  const high = resolveDifficulty("easy", 100);
+  const veryHigh = resolveDifficulty("easy", 1000);
   assert.equal(low.coinValue, 1);
   assert.ok(mid.coinValue >= low.coinValue);
   assert.equal(high.coinValue, 4);
