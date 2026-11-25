@@ -1,6 +1,6 @@
 import test, { beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { decayScore, readHubScores, recordHubScore, resetHubScore } from "../src/game/systems/HubScores.ts";
+import { decayScore, isEverUnlocked, markUnlocked, readHubScores, recordHubScore, resetHubScore, resetUnlocked } from "../src/game/systems/HubScores.ts";
 import { GAME_NODES, isGameUnlocked } from "../src/game/data/games.ts";
 
 const hour = 60 * 60 * 1000;
@@ -39,6 +39,17 @@ test("a fresh run can restore an active score below an all-time high", () => {
   assert.equal(readHubScores(existing, start + 2 * hour).game2, 125);
   resetHubScore("game2");
   assert.equal(readHubScores({ game2: 0 }, start + 2 * hour).game2, 0);
+});
+
+test("once marked unlocked a game stays unlocked until an explicit reset", () => {
+  assert.equal(isEverUnlocked("game4"), false);
+  markUnlocked("game4");
+  assert.equal(isEverUnlocked("game4"), true);
+  markUnlocked("game4"); // idempotent — marking twice doesn't break anything
+  assert.equal(isEverUnlocked("game4"), true);
+  assert.equal(isEverUnlocked("game5"), false, "unlocking one game doesn't unlock another");
+  resetUnlocked();
+  assert.equal(isEverUnlocked("game4"), false);
 });
 
 test("Yaadify keeps MemoMart at the centre and unlocks each playable game at its milestone", () => {

@@ -52,3 +52,43 @@ export function recordHubScore(id: string, score: number, previousBest: number, 
 export function resetHubScore(id: string, now = Date.now()) {
   save({ ...read(), [id]: { score: 0, earnedAt: now } });
 }
+
+// ---------- Permanent unlocks ----------
+// Scores keep decaying and a game's live total can drop back below its
+// threshold, but once a game has been reached it should never lock the
+// player back out — only the active score (shown on its badge) decays, not
+// access to the game itself.
+
+const UNLOCKED_KEY = "yaadify-unlocked-games-v1";
+let unlockedFallback: string[] = [];
+
+function readUnlocked(): string[] {
+  try {
+    const raw = localStorage.getItem(UNLOCKED_KEY);
+    return raw ? (JSON.parse(raw) as string[]) ?? [] : [];
+  } catch {
+    return unlockedFallback;
+  }
+}
+
+function saveUnlocked(ids: string[]) {
+  unlockedFallback = ids;
+  try {
+    localStorage.setItem(UNLOCKED_KEY, JSON.stringify(ids));
+  } catch {
+    // Keep this session's unlocks even if storage is unavailable.
+  }
+}
+
+export function isEverUnlocked(id: string): boolean {
+  return readUnlocked().includes(id);
+}
+
+export function markUnlocked(id: string): void {
+  const ids = readUnlocked();
+  if (!ids.includes(id)) saveUnlocked([...ids, id]);
+}
+
+export function resetUnlocked(): void {
+  saveUnlocked([]);
+}

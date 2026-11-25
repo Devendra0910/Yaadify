@@ -16,7 +16,7 @@ import { SoundDetectiveApp } from "./ui/screens/soundDetective/SoundDetectiveApp
 import { detectiveBest, loadDetective, resetDetective, SOUND_DETECTIVE_ID } from "./game/soundDetective/save";
 import { DualDriveApp } from "./ui/screens/dualDrive/DualDriveApp";
 import { DualDriveSave, dualDriveHubScore, DUAL_DRIVE_ID } from "./game/dualDrive/save";
-import { readHubScores } from "./game/systems/HubScores";
+import { readHubScores, resetUnlocked } from "./game/systems/HubScores";
 import { gameBridge, BridgeEvents } from "./game/GameBridge";
 import { GAME_NODES, isGameUnlocked } from "./game/data/games";
 import { SaveSystem } from "./game/systems/SaveSystem";
@@ -271,6 +271,7 @@ export default function App() {
             FactFlipSave.reset();
             resetDetective();
             DualDriveSave.reset();
+            resetUnlocked();
             setSave(SaveSystem.load());
             setGameScores(loadGameScores());
             showHubMessage("All progress reset!");

@@ -57,10 +57,10 @@ test("speed and gaps ramp smoothly with score; gaps cap but speed never does", (
   assert.ok(capped.speed > resolveDifficulty(100).speed * 1.3, "speed keeps growing past where gaps stop shrinking");
 });
 
-test("speed follows speed = k * sqrt(100 + score) exactly", () => {
-  const k = resolveDifficulty(0).speed / Math.sqrt(100);
+test("speed follows speed = k * sqrt(10 + score) exactly", () => {
+  const k = resolveDifficulty(0).speed / Math.sqrt(10);
   for (const score of [0, 1, 50, 100, 500, 10_000]) {
-    const expected = k * Math.sqrt(100 + score);
+    const expected = k * Math.sqrt(10 + score);
     assert.ok(Math.abs(resolveDifficulty(score).speed - expected) < 1e-9, `score ${score}`);
   }
 });

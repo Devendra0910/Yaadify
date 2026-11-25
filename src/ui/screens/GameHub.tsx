@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { GAME_NODES, isGameUnlocked, type GameNode } from "../../game/data/games";
+import { isEverUnlocked, markUnlocked } from "../../game/systems/HubScores";
 
 interface PositionedNode extends GameNode {
   px: number; // centre x on the map, in CSS pixels
@@ -65,12 +66,21 @@ export function GameHub({
     wrap.scrollTop = CENTER.y - wrap.clientHeight / 2;
   }, []);
 
+  // Scores keep decaying, but a game that was ever reached should never
+  // lock the player back out — persist each newly-live-unlocked node so it
+  // stays accessible even after its own score (and the total) decays.
+  useEffect(() => {
+    for (const node of GAME_NODES) {
+      if (isGameUnlocked(node, totalScore)) markUnlocked(node.id);
+    }
+  }, [totalScore]);
+
   return (
     <div className="overlay overlay--opaque">
       <div className="menu-logo" style={{ marginTop: "2vh" }}>
         <h1 className="title-xl">Yaadify</h1>
         <p className="subtitle" style={{ color: "rgba(255,255,255,0.8)" }}>
-          Active scores halve every hour. Games can lock again.
+          Active scores halve every hour. Once unlocked, a game stays unlocked.
         </p>
         <div className="hub-total-score">⭐ Total: {totalScore}</div>
       </div>
@@ -124,7 +134,7 @@ export function GameHub({
           </svg>
 
           {nodes.map((node) => {
-            const unlocked = isGameUnlocked(node, totalScore);
+            const unlocked = isGameUnlocked(node, totalScore) || isEverUnlocked(node.id);
             const isRoot = node.connectsTo === null;
             // Only reveal a score once the game is actually unlocked — a "???"
             // placeholder shouldn't leak that it secretly has a score of 0.
