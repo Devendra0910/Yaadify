@@ -16,6 +16,8 @@ export type FailReason = "red-collision" | "blue-collision";
  * unavoidable collision no matter which lane the car is in. (Missing a
  * circle isn't fatal — only a square collision is — but `requiredLane`
  * still matters whenever a square shares the row.) */
+export type EventOutcome = "collected" | "avoided" | "missed" | "collision";
+
 export interface TrackEvent {
   id: number;
   hitTime: number;
@@ -25,7 +27,16 @@ export interface TrackEvent {
   /** Scroll speed (px/ms) in effect when this event was scheduled — captured
    * so a later difficulty ramp never makes an already-spawned object jump. */
   speed: number;
+  /** Points this row's circle is worth, locked in at spawn time for the same
+   * reason as `speed` — a mid-flight difficulty change shouldn't retroactively
+   * change what a coin already on screen is worth. */
+  coinValue: number;
   resolved: boolean;
+  /** Set once resolved, so the renderer can show a collection "pop" instead
+   * of letting the shape visibly slide through the car. */
+  outcome: EventOutcome | null;
+  /** The simulation time (ms) at which this row resolved — null until then. */
+  resolvedAt: number | null;
 }
 
 export interface Difficulty {
@@ -35,6 +46,9 @@ export interface Difficulty {
   switchChance: number;
   dualChance: number;
   squareOnlyChance: number;
+  /** Points a circle is worth while this difficulty is in effect — starts
+   * at 1 and climbs toward COIN_VALUE_CAP as speed ramps up with score. */
+  coinValue: number;
 }
 
 interface TierBase {
@@ -61,6 +75,10 @@ const HARD_CAP: TierBase = { speed: 0.34, minGapSame: 480, minGapSwitch: 620, sw
 /** Score at which difficulty fully reaches the hard cap, regardless of starting tier. */
 const RAMP_SCORE = 60;
 
+/** The highest a circle's point value ever climbs to, reached alongside the
+ * hard cap. Circles start out worth 1 point each. */
+const COIN_VALUE_CAP = 4;
+
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
@@ -75,6 +93,7 @@ export function resolveDifficulty(tier: Tier, score: number): Difficulty {
     switchChance: lerp(base.switchChance, HARD_CAP.switchChance, t),
     dualChance: lerp(base.dualChance, HARD_CAP.dualChance, t),
     squareOnlyChance: lerp(base.squareOnlyChance, HARD_CAP.squareOnlyChance, t),
+    coinValue: 1 + Math.floor(t * (COIN_VALUE_CAP - 1) * (1 + 1e-9)),
   };
 }
 
@@ -137,7 +156,11 @@ export function generateNextEvent(state: RoadGenState, difficulty: Difficulty): 
     }
   }
 
-  const event: TrackEvent = { id: state.nextId++, hitTime, lane0, lane1, requiredLane, speed: difficulty.speed, resolved: false };
+  const event: TrackEvent = {
+    id: state.nextId++, hitTime, lane0, lane1, requiredLane,
+    speed: difficulty.speed, coinValue: difficulty.coinValue,
+    resolved: false, outcome: null, resolvedAt: null,
+  };
   state.lastRequiredLane = requiredLane;
   state.lastHitTime = hitTime;
   return event;
@@ -200,16 +223,26 @@ function ensureEvents(road: RoadState, now: number, difficulty: Difficulty): voi
   }
 }
 
-function resolveRoad(road: RoadState, now: number, onScore: () => void): "collision" | null {
+function resolveRoad(road: RoadState, now: number, onScore: (points: number) => void): "collision" | null {
   for (const event of road.events) {
     if (event.resolved || event.hitTime > now) continue;
     event.resolved = true;
+    event.resolvedAt = now;
     const carLane = road.car.lane;
     const atCar = carLane === 0 ? event.lane0 : event.lane1;
-    if (atCar === "circle") onScore();
-    else if (atCar === "square") return "collision";
-    // A circle in the other lane that the car didn't reach is simply
-    // missed — no score, but only a square collision ends the run.
+    const otherLaneShape = carLane === 0 ? event.lane1 : event.lane0;
+    if (atCar === "circle") {
+      event.outcome = "collected";
+      onScore(event.coinValue);
+    } else if (atCar === "square") {
+      event.outcome = "collision";
+      return "collision";
+    } else if (otherLaneShape === "circle") {
+      event.outcome = "missed";
+      // No score, but only a square collision ends the run.
+    } else {
+      event.outcome = "avoided";
+    }
   }
   road.events = road.events.filter((event) => !event.resolved || now - event.hitTime < LOOKBACK_MS);
   return null;
@@ -224,13 +257,13 @@ export function step(state: GameState, dtMs: number): GameState {
   ensureEvents(state.red, state.now, difficulty);
   ensureEvents(state.blue, state.now, difficulty);
 
-  const redResult = resolveRoad(state.red, state.now, () => state.score++);
+  const redResult = resolveRoad(state.red, state.now, (points) => { state.score += points; });
   if (redResult) {
     state.gameOver = true;
     state.failReason = "red-collision";
     return state;
   }
-  const blueResult = resolveRoad(state.blue, state.now, () => state.score++);
+  const blueResult = resolveRoad(state.blue, state.now, (points) => { state.score += points; });
   if (blueResult) {
     state.gameOver = true;
     state.failReason = "blue-collision";

@@ -149,19 +149,57 @@ test("missing a circle (being in the wrong lane) does not end the run", () => {
   assert.equal(state.gameOver, false);
 });
 
-test("scoring accuracy: a perfect run's score equals its circle count, no double counting", () => {
+test("scoring accuracy: a perfect run accumulates an integer score with no double counting", () => {
   const final = simulatePerfectRun(11, "medium", 20_000);
   assert.equal(final.gameOver, false, final.failReason ?? "");
-  let circles = 0;
-  for (const road of [final.red, final.blue]) {
-    for (const event of road.events) {
-      if (event.resolved && (event.lane0 === "circle" || event.lane1 === "circle")) circles++;
-    }
-  }
-  // events still tracked are only the recent lookback window, so just assert
-  // the score only ever increased by exactly one circle at a time (no jumps).
   assert.ok(final.score > 0);
   assert.ok(Number.isInteger(final.score));
+});
+
+test("a coin's value is locked in at spawn and starts at 1, climbing toward the cap with score", () => {
+  const low = resolveDifficulty("easy", 0);
+  const mid = resolveDifficulty("easy", 30);
+  const high = resolveDifficulty("easy", 60);
+  const veryHigh = resolveDifficulty("easy", 500);
+  assert.equal(low.coinValue, 1);
+  assert.ok(mid.coinValue >= low.coinValue);
+  assert.equal(high.coinValue, 4);
+  assert.equal(veryHigh.coinValue, 4); // never exceeds the cap
+
+  const gen = createRoadGen(123);
+  const event = generateNextEvent(gen, high);
+  assert.equal(event.coinValue, 4);
+});
+
+test("collecting a circle awards its own locked-in coinValue, not a flat 1 point", () => {
+  const state = createGameState("easy", 321);
+  // Push score up so later coins are worth more than 1, then confirm an
+  // actual collection awards exactly that coin's value.
+  state.score = 60;
+  let target = null;
+  while (!target) {
+    const difficulty = resolveDifficulty("easy", state.score);
+    const event = generateNextEvent(state.red.gen, difficulty);
+    if ((event.lane0 === "circle" || event.lane1 === "circle") && event.coinValue > 1) target = event;
+  }
+  state.red.events = [target];
+  setLane(state, "red", target.requiredLane);
+
+  // Step in small frames, perfectly piloting blue throughout, and capture
+  // the score delta on the exact frame red's target resolves — isolating
+  // red's award from anything blue independently collects along the way.
+  const stepMs = 16;
+  let awarded = null;
+  for (let elapsed = 0; elapsed < target.hitTime + stepMs && awarded === null; elapsed += stepMs) {
+    const upcomingBlue = state.blue.events.find((event) => !event.resolved && event.hitTime > state.now);
+    if (upcomingBlue) setLane(state, "blue", upcomingBlue.requiredLane);
+    const before = state.score;
+    step(state, stepMs);
+    if (target.resolved) awarded = state.score - before;
+  }
+  assert.equal(target.outcome, "collected");
+  assert.equal(awarded, target.coinValue);
+  assert.ok(target.coinValue > 1);
 });
 
 test("1,000 perfect-play simulations across all tiers never end in an unavoidable game over", () => {

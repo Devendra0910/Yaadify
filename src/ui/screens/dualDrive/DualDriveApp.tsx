@@ -24,6 +24,7 @@ const TIERS: { id: Tier; label: string; hint: string }[] = [
 const CAR_COLORS: Record<RoadId, string> = { red: "#e5533d", blue: "#2e7fd9" };
 const MAX_DT_MS = 50;
 const LANE_EASE = 0.28;
+const POP_DURATION_MS = 260;
 
 function failMessage(reason: FailReason | null): string {
   switch (reason) {
@@ -116,6 +117,32 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
     for (const road of ["red", "blue"] as const) {
       const roadState = state[road];
       for (const event of roadState.events) {
+        if (event.resolved) {
+          if (event.outcome === "collected") {
+            const progress = Math.min(1, (state.now - (event.resolvedAt ?? state.now)) / POP_DURATION_MS);
+            if (progress < 1) {
+              const lane = event.lane0 === "circle" ? 0 : 1;
+              const cx = laneCenterX(road, lane);
+              const alpha = 1 - progress;
+              const r = laneW * 0.22 * (1 + progress * 0.7);
+              ctx.save();
+              ctx.globalAlpha = alpha;
+              ctx.beginPath();
+              ctx.fillStyle = "#f2a93a";
+              ctx.arc(cx, carY, r, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.font = "700 15px system-ui, sans-serif";
+              ctx.textAlign = "center";
+              ctx.fillStyle = "white";
+              ctx.fillText(`+${event.coinValue}`, cx, carY - 22 - progress * 26);
+              ctx.restore();
+            }
+          }
+          // avoided / missed / collision rows vanish immediately — nothing
+          // should visibly slide through the car once resolved.
+          continue;
+        }
+
         const objY = carY - (event.hitTime - state.now) * event.speed;
         if (objY < trackTop - 40 || objY > height + 40) continue;
         for (const lane of [0, 1] as const) {
@@ -130,6 +157,12 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
             ctx.strokeStyle = "rgba(255,255,255,0.5)";
             ctx.lineWidth = 2;
             ctx.stroke();
+            ctx.font = "700 13px system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "#2a1a05";
+            ctx.fillText(String(event.coinValue), cx, objY + 1);
+            ctx.textBaseline = "alphabetic";
           } else {
             const s = laneW * 0.38;
             ctx.fillStyle = "#c23b3b";
