@@ -42,16 +42,17 @@ export function TimeDetectiveGameScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine.phase]);
 
-  // Keyboard controls: left arrow = A was longer, right arrow = B was longer.
+  // Keyboard controls: left/right arrow = A/B was longer; Enter/Space = Next.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "ArrowLeft") engine.answer("A");
       else if (e.key === "ArrowRight") engine.answer("B");
+      else if (e.key === "Enter" || e.key === " ") engine.advance();
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [engine.answer]);
+  }, [engine.answer, engine.advance]);
 
   if (!engine.round) return null;
 
@@ -117,14 +118,22 @@ export function TimeDetectiveGameScreen({
         )}
       </div>
 
-      <div className="td-answer-grid">
-        <button className="td-answer-btn td-answer-btn--a" disabled={answersDisabled} onClick={() => engine.answer("A")}>
-          A WAS LONGER
-        </button>
-        <button className="td-answer-btn td-answer-btn--b" disabled={answersDisabled} onClick={() => engine.answer("B")}>
-          B WAS LONGER
-        </button>
-      </div>
+      {engine.phase === "roundResult" ? (
+        <div className="td-next-wrap">
+          <button className="btn btn--primary btn--block" onClick={engine.advance}>
+            Next ▶
+          </button>
+        </div>
+      ) : (
+        <div className="td-answer-grid">
+          <button className="td-answer-btn td-answer-btn--a" disabled={answersDisabled} onClick={() => engine.answer("A")}>
+            A WAS LONGER
+          </button>
+          <button className="td-answer-btn td-answer-btn--b" disabled={answersDisabled} onClick={() => engine.answer("B")}>
+            B WAS LONGER
+          </button>
+        </div>
+      )}
 
       {engine.phase === "paused" && (
         <PauseMenu

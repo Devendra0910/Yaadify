@@ -24,7 +24,6 @@ export interface TimeDetectiveRunStats {
 }
 
 const GAP_MS = 500;
-const RESULT_DELAY_MS = 900;
 
 export function useTimeDetectiveRun() {
   const [phase, setPhase] = useState<TimeDetectivePhase>("idle");
@@ -54,7 +53,6 @@ export function useTimeDetectiveRun() {
   const answeredRef = useRef(false);
   const sessionTimeRef = useRef(SESSION_SECONDS);
   const stageTimeoutRef = useRef<number | null>(null);
-  const resultTimeoutRef = useRef<number | null>(null);
   const prevPhaseRef = useRef<TimeDetectivePhase>("playing");
   const phaseRef = useRef<TimeDetectivePhase>("idle");
   const stageRef = useRef<TimeDetectiveStage>("waiting");
@@ -65,13 +63,6 @@ export function useTimeDetectiveRun() {
     if (stageTimeoutRef.current !== null) {
       window.clearTimeout(stageTimeoutRef.current);
       stageTimeoutRef.current = null;
-    }
-  };
-
-  const clearResultTimeout = () => {
-    if (resultTimeoutRef.current !== null) {
-      window.clearTimeout(resultTimeoutRef.current);
-      resultTimeoutRef.current = null;
     }
   };
 
@@ -99,7 +90,6 @@ export function useTimeDetectiveRun() {
 
   const endRun = useCallback(() => {
     clearStageTimeout();
-    clearResultTimeout();
     setPhase("gameOver");
     const result = TimeDetectiveSave.recordRun(scoreRef.current, levelRef.current, bestStreakRef.current);
     setIsNewBest(result.isNewBest);
@@ -164,17 +154,20 @@ export function useTimeDetectiveRun() {
       }
 
       setPhase("roundResult");
-      clearResultTimeout();
-      resultTimeoutRef.current = window.setTimeout(() => {
-        if (sessionTimeRef.current <= 0) {
-          endRun();
-          return;
-        }
-        nextRound();
-      }, RESULT_DELAY_MS);
     },
-    [endRun, nextRound],
+    [],
   );
+
+  /** Called by the "Next" button — the player controls the pace of a round
+   * result instead of it auto-advancing on a timer. */
+  const advance = useCallback(() => {
+    if (phaseRef.current !== "roundResult") return;
+    if (sessionTimeRef.current <= 0) {
+      endRun();
+      return;
+    }
+    nextRound();
+  }, [endRun, nextRound]);
 
   const pause = useCallback(() => {
     if (phaseRef.current !== "playing" || stageRef.current !== "waiting") return;
@@ -202,13 +195,7 @@ export function useTimeDetectiveRun() {
     return () => window.clearInterval(id);
   }, [phase, endRun]);
 
-  useEffect(
-    () => () => {
-      clearStageTimeout();
-      clearResultTimeout();
-    },
-    [],
-  );
+  useEffect(() => clearStageTimeout, []);
 
   const stats: TimeDetectiveRunStats = {
     attempted,
@@ -233,6 +220,7 @@ export function useTimeDetectiveRun() {
     stats,
     startRun,
     answer,
+    advance,
     pause,
     resume,
   };
