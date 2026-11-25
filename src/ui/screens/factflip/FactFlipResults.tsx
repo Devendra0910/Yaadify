@@ -31,7 +31,7 @@ export function FactFlipResults({
   onReplay: () => void;
   onHome: () => void;
 }) {
-  const [showReview, setShowReview] = useState(false);
+  const [showReview, setShowReview] = useState(true);
   const accuracy = stats.attempted > 0 ? Math.round((stats.correct / stats.attempted) * 100) : 0;
 
   return (
