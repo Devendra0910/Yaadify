@@ -46,7 +46,7 @@ export const GAME_NODES: GameNode[] = [
   // "6 Senses" lineup: this slot was ChooseMax, then Time Detective, now
   // Pulse (the Time-sense ring game) — both earlier occupants' code stays
   // on disk, just unhooked from App.tsx, in case either is ever brought back.
-  { id: "pulse", name: "Pulse", emoji: "💓", unlockScore: 100, playable: true, connectsTo: "memomart", angleDeg: 90, radius: RING_RADIUS },
+  { id: "pulse", name: "Pulse", emoji: "💓", unlockScore: 500, playable: true, connectsTo: "memomart", angleDeg: 90, radius: RING_RADIUS },
   { id: "game3", name: "MindFlip", emoji: "🔀", unlockScore: 200, playable: true, connectsTo: "memomart", angleDeg: 330, radius: RING_RADIUS },
   // FactFlip reverted to a locked placeholder — reserved for a future
   // Balance-sense game. FactFlip's own code stays on disk, unhooked from
@@ -69,7 +69,7 @@ export const GAME_NODES: GameNode[] = [
     id: "game6",
     name: "Dual Drive",
     emoji: "🏎️",
-    unlockScore: 500,
+    unlockScore: 100,
     playable: true,
     connectsTo: "memomart",
     angleDeg: 30,
