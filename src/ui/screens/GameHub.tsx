@@ -78,7 +78,7 @@ export function GameHub({
   return (
     <div className="overlay overlay--opaque">
       <div className="menu-logo" style={{ marginTop: "2vh" }}>
-        <h1 className="title-xl">Yaadify</h1>
+        <h1 className="title-xl">6 Senses</h1>
         <p className="subtitle" style={{ color: "rgba(255,255,255,0.8)" }}>
           Active scores halve every hour. Once unlocked, a game stays unlocked.
         </p>

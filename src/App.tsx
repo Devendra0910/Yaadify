@@ -240,7 +240,7 @@ export default function App() {
         <div className="overlay overlay--opaque overlay--center">
           <div className="menu-logo">
             <span className="emoji">🛒</span>
-            <h1 className="title-xl">Yaadify</h1>
+            <h1 className="title-xl">6 Senses</h1>
             <p className="subtitle" style={{ color: "rgba(255,255,255,0.8)" }}>
               Loading…
             </p>

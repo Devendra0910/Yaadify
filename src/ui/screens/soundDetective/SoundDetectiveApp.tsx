@@ -232,11 +232,11 @@ export function SoundDetectiveApp({ onExit }: { onExit?: () => void }) {
       <div className="sd-wrap">
         <header className="sd-header flex items-center justify-between gap-3">
           {screen === "setup" && !onExit ? (
-            <div className="sd-brand"><span aria-hidden="true">◉</span> Yaadify</div>
+            <div className="sd-brand"><span aria-hidden="true">◉</span> 6 Senses</div>
           ) : (
             <>
               <button className="sd-back" onClick={screen === "setup" ? onExit : goSetup}>
-                <span aria-hidden="true">←</span> {screen === "setup" ? "Yaadify" : "Setup"}
+                <span aria-hidden="true">←</span> {screen === "setup" ? "6 Senses" : "Setup"}
               </button>
               <div className="sd-brand"><span aria-hidden="true">◉</span> Sound Detective</div>
             </>

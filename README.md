@@ -40,7 +40,7 @@ npm ci
 npm run dev
 ```
 
-Open [Yaadify](http://localhost:5173/). Start with MemoMart at the centre of the honeycomb. ChooseMax, MindFlip, FactFlip, and Sound Detective unlock at 100, 200, 300, and 400 total active points respectively. Tap **Start listening** to play Identify the Sound. The 120-second timer starts with the first sound. Players can finish early and save their score, and practice is untimed. Runs start at level 1 with familiar sounds. Correct answers earn points equal to the current level and move the player up one level. Wrong answers move them down one level, to a minimum of 1.
+Open [6 Senses](http://localhost:5173/). Start with MemoMart at the centre of the honeycomb. ChooseMax, MindFlip, FactFlip, and Sound Detective unlock at 100, 200, 300, and 400 total active points respectively. Tap **Start listening** to play Identify the Sound. The 120-second timer starts with the first sound. Players can finish early and save their score, and practice is untimed. Runs start at level 1 with familiar sounds. Correct answers earn points equal to the current level and move the player up one level. Wrong answers move them down one level, to a minimum of 1.
 
 ### Audio pack
 
@@ -56,6 +56,6 @@ npm run test:sound-sim
 
 The development URL [Sound Detective QA](http://localhost:5173/?soundQA=1) also exposes the 1,000-session simulation and error report.
 
-### Yaadify scores
+### 6 Senses scores
 
 Each game’s active score halves every 24 hours and is replaced when a new run beats it. The honeycomb’s unlocks use the sum of active scores. A game can lock again when the total falls below its threshold. All-time bests and run results are retained.
