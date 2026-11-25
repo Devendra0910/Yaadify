@@ -1538,3 +1538,106 @@ body {
   font-size: 12px;
   color: var(--color-text-muted);
 }
+
+/* ---------- Projectile Catch ---------- */
+
+.pc-game-overlay {
+  background: linear-gradient(160deg, #0f2436 0%, #0a1620 100%);
+}
+
+.pc-hud {
+  margin-bottom: 4px;
+}
+
+.pc-play-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 0;
+  padding: 0 20px;
+}
+
+.pc-stage-label {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+.pc-lane {
+  position: relative;
+  width: 86px;
+  height: 320px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.08) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.pc-fog {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(200, 220, 235, 0.22) 0%, rgba(200, 220, 235, 0.55) 100%);
+  backdrop-filter: blur(1px);
+}
+
+.pc-catch-zone {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px dashed rgba(255, 217, 102, 0.65);
+}
+
+.pc-ball {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  margin-top: -17px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe08a 0%, #f2a93a 55%, #b5700f 100%);
+  box-shadow: 0 0 14px 3px rgba(242, 169, 58, 0.55);
+  transition: top 0.05s linear;
+}
+
+.pc-feedback-correct {
+  animation: mf-flash-green 0.4s ease, mf-pop 0.3s ease;
+}
+
+.pc-feedback-wrong {
+  animation: mf-flash-red 0.4s ease, mf-shake-move 0.35s ease;
+}
+
+.pc-reveal {
+  text-align: center;
+}
+
+.pc-reveal-detail {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffe9a8;
+}
+
+.pc-catch-wrap {
+  padding: 4px 2px calc(var(--safe-bottom) + 4px);
+}
+
+.pc-results-card {
+  width: 100%;
+  max-width: 380px;
+  max-height: 86vh;
+  overflow-y: auto;
+}

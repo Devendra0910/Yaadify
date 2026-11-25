@@ -56,7 +56,7 @@ test("Yaadify keeps MemoMart at the centre and unlocks each playable game at its
   const centre = GAME_NODES.find((node) => node.connectsTo === null);
   assert.equal(centre.id, "memomart");
   assert.ok(isGameUnlocked(centre, 0));
-  const milestones = { "Dual Drive": 100, MindFlip: 200, "Sound Detective": 400, Pulse: 500 };
+  const milestones = { "Dual Drive": 100, MindFlip: 200, "Sound Detective": 400, "Projectile Catch": 500 };
   const playable = GAME_NODES.filter((node) => node.playable && node !== centre);
   assert.equal(playable.length, Object.keys(milestones).length);
   for (const node of playable) {
