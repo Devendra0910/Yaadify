@@ -120,14 +120,33 @@ test("a square in the car's lane ends the run as a collision", () => {
   assert.equal(state.failReason, "red-collision");
 });
 
-test("missing a mandatory circle (being in the wrong lane) ends the run", () => {
+test("missing a circle (being in the wrong lane) does not end the run", () => {
   const state = createGameState("easy", 6);
-  const first = state.red.events[0];
-  setLane(state, "red", first.requiredLane === 0 ? 1 : 0);
-  setLane(state, "blue", state.blue.events[0].requiredLane);
-  step(state, first.hitTime + 1);
-  assert.equal(state.gameOver, true);
-  assert.equal(state.failReason, "red-missed");
+  // Scan for a circle-only row (no paired square), so being in the wrong
+  // lane has no collision risk — just a forfeited point.
+  let target = null;
+  while (!target) {
+    const difficulty = resolveDifficulty("easy", 0);
+    const event = generateNextEvent(state.red.gen, difficulty);
+    const hasCircle = event.lane0 === "circle" || event.lane1 === "circle";
+    const hasSquare = event.lane0 === "square" || event.lane1 === "square";
+    if (hasCircle && !hasSquare) target = event;
+  }
+  state.red.events = [target];
+  setLane(state, "red", target.requiredLane === 0 ? 1 : 0);
+  // Step in small frames, keeping blue perfectly piloted throughout, so only
+  // red's deliberate miss is under test — blue never risks its own collision.
+  const stepMs = 16;
+  for (let elapsed = 0; elapsed < target.hitTime + stepMs; elapsed += stepMs) {
+    const upcomingBlue = state.blue.events.find((event) => !event.resolved && event.hitTime > state.now);
+    if (upcomingBlue) setLane(state, "blue", upcomingBlue.requiredLane);
+    step(state, stepMs);
+  }
+  // Blue is perfectly piloted so it may legitimately score its own circles —
+  // the actual claim under test is that red's specific miss resolved
+  // without ending the run (not that total score stayed at zero).
+  assert.equal(target.resolved, true);
+  assert.equal(state.gameOver, false);
 });
 
 test("scoring accuracy: a perfect run's score equals its circle count, no double counting", () => {
@@ -189,10 +208,15 @@ test("a dt of zero is a safe no-op", () => {
 
 test("step() is a no-op once the game is already over", () => {
   const state = createGameState("easy", 6);
-  const first = state.red.events[0];
-  setLane(state, "red", first.requiredLane === 0 ? 1 : 0);
-  setLane(state, "blue", state.blue.events[0].requiredLane);
-  step(state, first.hitTime + 1);
+  let target = null;
+  while (!target) {
+    const difficulty = resolveDifficulty("easy", 0);
+    const event = generateNextEvent(state.red.gen, difficulty);
+    if (event.lane0 === "square" || event.lane1 === "square") target = event;
+  }
+  state.red.events = [target];
+  setLane(state, "red", target.lane0 === "square" ? 0 : 1);
+  step(state, target.hitTime + 1);
   assert.equal(state.gameOver, true);
   const scoreAtEnd = state.score;
   const nowAtEnd = state.now;

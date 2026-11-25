@@ -29,8 +29,6 @@ function failMessage(reason: FailReason | null): string {
   switch (reason) {
     case "red-collision": return "The red car hit a square.";
     case "blue-collision": return "The blue car hit a square.";
-    case "red-missed": return "The red car missed a circle.";
-    case "blue-missed": return "The blue car missed a circle.";
     default: return "";
   }
 }
@@ -360,7 +358,7 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
             <p>Tap the <strong>left</strong> half of the screen to switch the <strong style={{ color: CAR_COLORS.red }}>red</strong> car's lane.</p>
             <p>Tap the <strong>right</strong> half to switch the <strong style={{ color: CAR_COLORS.blue }}>blue</strong> car's lane.</p>
             <p>On desktop: <strong>A</strong> switches red, <strong>L</strong> switches blue.</p>
-            <p>Collect every circle. Avoid every square. One mistake ends the run.</p>
+            <p>Collect circles for points. Hitting a square ends the run.</p>
             <button className="btn btn--primary btn--block" onClick={dismissTutorial}>Got it, let's go</button>
           </div>
         </div>

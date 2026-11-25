@@ -7,13 +7,15 @@ export type Lane = 0 | 1;
 export type RoadId = "red" | "blue";
 export type ObjectType = "circle" | "square";
 export type Tier = "easy" | "medium" | "hard";
-export type FailReason = "red-collision" | "red-missed" | "blue-collision" | "blue-missed";
+export type FailReason = "red-collision" | "blue-collision";
 
-/** A single scheduled obstacle row for one road. Exactly one of the two
- * "mandatory" shapes (a circle, or a square the car must dodge) ever
- * determines `requiredLane` — the generator never produces a row where both
- * lanes are simultaneously mandatory, since that would be an unavoidable
- * game over no matter which lane the car is in. */
+/** A single scheduled obstacle row for one road. `requiredLane` is the lane
+ * that keeps the car safe for this row — the circle's lane when one is
+ * present, otherwise the lane away from any square. The generator never
+ * produces a row with a square in both lanes, since that would be an
+ * unavoidable collision no matter which lane the car is in. (Missing a
+ * circle isn't fatal — only a square collision is — but `requiredLane`
+ * still matters whenever a square shares the row.) */
 export interface TrackEvent {
   id: number;
   hitTime: number;
@@ -47,14 +49,14 @@ interface TierBase {
 /** Starting points per chosen tier — "mostly one decision at a time" for
  * easy, both roads needing attention for medium, frequent switches for hard. */
 const TIER_BASE: Record<Tier, TierBase> = {
-  easy: { speed: 0.22, minGapSame: 1100, minGapSwitch: 1500, switchChance: 0.25, dualChance: 0.05, squareOnlyChance: 0.15 },
-  medium: { speed: 0.30, minGapSame: 850, minGapSwitch: 1150, switchChance: 0.45, dualChance: 0.2, squareOnlyChance: 0.25 },
-  hard: { speed: 0.38, minGapSame: 650, minGapSwitch: 900, switchChance: 0.6, dualChance: 0.35, squareOnlyChance: 0.3 },
+  easy: { speed: 0.14, minGapSame: 1100, minGapSwitch: 1500, switchChance: 0.25, dualChance: 0.05, squareOnlyChance: 0.15 },
+  medium: { speed: 0.20, minGapSame: 850, minGapSwitch: 1150, switchChance: 0.45, dualChance: 0.2, squareOnlyChance: 0.25 },
+  hard: { speed: 0.26, minGapSame: 650, minGapSwitch: 900, switchChance: 0.6, dualChance: 0.35, squareOnlyChance: 0.3 },
 };
 
 /** The ceiling every tier ramps toward — difficulty keeps climbing smoothly
  * with score but never goes below a human-reactable minimum gap. */
-const HARD_CAP: TierBase = { speed: 0.52, minGapSame: 480, minGapSwitch: 620, switchChance: 0.68, dualChance: 0.45, squareOnlyChance: 0.35 };
+const HARD_CAP: TierBase = { speed: 0.34, minGapSame: 480, minGapSwitch: 620, switchChance: 0.68, dualChance: 0.45, squareOnlyChance: 0.35 };
 
 /** Score at which difficulty fully reaches the hard cap, regardless of starting tier. */
 const RAMP_SCORE = 60;
@@ -198,16 +200,16 @@ function ensureEvents(road: RoadState, now: number, difficulty: Difficulty): voi
   }
 }
 
-function resolveRoad(road: RoadState, now: number, onScore: () => void): "collision" | "missed" | null {
+function resolveRoad(road: RoadState, now: number, onScore: () => void): "collision" | null {
   for (const event of road.events) {
     if (event.resolved || event.hitTime > now) continue;
     event.resolved = true;
     const carLane = road.car.lane;
     const atCar = carLane === 0 ? event.lane0 : event.lane1;
-    const otherLaneShape = carLane === 0 ? event.lane1 : event.lane0;
     if (atCar === "circle") onScore();
     else if (atCar === "square") return "collision";
-    else if (otherLaneShape === "circle") return "missed";
+    // A circle in the other lane that the car didn't reach is simply
+    // missed — no score, but only a square collision ends the run.
   }
   road.events = road.events.filter((event) => !event.resolved || now - event.hitTime < LOOKBACK_MS);
   return null;
@@ -225,13 +227,13 @@ export function step(state: GameState, dtMs: number): GameState {
   const redResult = resolveRoad(state.red, state.now, () => state.score++);
   if (redResult) {
     state.gameOver = true;
-    state.failReason = redResult === "collision" ? "red-collision" : "red-missed";
+    state.failReason = "red-collision";
     return state;
   }
   const blueResult = resolveRoad(state.blue, state.now, () => state.score++);
   if (blueResult) {
     state.gameOver = true;
-    state.failReason = blueResult === "collision" ? "blue-collision" : "blue-missed";
+    state.failReason = "blue-collision";
   }
   return state;
 }
