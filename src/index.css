@@ -1384,3 +1384,157 @@ body {
   font-size: 12px;
   color: var(--color-text-muted);
 }
+
+/* ---------- Pulse ---------- */
+
+.pl-game-overlay {
+  background: linear-gradient(160deg, #241626 0%, #150d1a 100%);
+}
+
+.pl-hud {
+  margin-bottom: 4px;
+}
+
+.pl-play-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  min-height: 0;
+  padding: 0 20px;
+}
+
+.pl-stage-label {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+.pl-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #2e2035;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+}
+
+.pl-circle--pulsing {
+  background: radial-gradient(circle, #ff8fd6 0%, #d94fb0 70%, #93236f 100%);
+  border-color: #ffd3ef;
+  animation: td-light-pulse 0.9s ease-in-out infinite;
+}
+
+.pl-dial {
+  width: 100%;
+  max-width: 320px;
+}
+
+.pl-dial-track {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.pl-needle {
+  position: absolute;
+  top: -7px;
+  width: 4px;
+  height: 24px;
+  border-radius: 2px;
+  background: #ffd966;
+  box-shadow: 0 0 10px 2px rgba(255, 217, 102, 0.8);
+  transform: translateX(-50%);
+}
+
+.pl-mark {
+  position: absolute;
+  top: -6px;
+  width: 4px;
+  height: 22px;
+  border-radius: 2px;
+  transform: translateX(-50%);
+}
+
+.pl-mark--true {
+  background: #6ee787;
+  box-shadow: 0 0 8px 2px rgba(110, 231, 135, 0.7);
+}
+
+.pl-mark--guess {
+  background: #ff8fd6;
+  box-shadow: 0 0 8px 2px rgba(255, 143, 214, 0.7);
+}
+
+.pl-dial-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pl-reveal {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  text-align: center;
+}
+
+.pl-reveal-score {
+  font-weight: 900;
+  font-size: 24px;
+  color: #ffd966;
+}
+
+.pl-reveal-detail {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.pl-lockin-wrap {
+  padding: 4px 2px calc(var(--safe-bottom) + 4px);
+}
+
+.pl-results-card {
+  width: 100%;
+  max-width: 380px;
+  max-height: 86vh;
+  overflow-y: auto;
+}
+
+.pl-review-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 220px;
+}
+
+.pl-review-item {
+  background: var(--color-card-dim);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.pl-review-meta {
+  margin: 0 0 4px;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.pl-review-explanation {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}

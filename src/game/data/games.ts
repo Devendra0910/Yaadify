@@ -43,10 +43,10 @@ const RING_RADIUS = 180;
 export const GAME_NODES: GameNode[] = [
   { id: "memomart", name: "MemoMart", emoji: "🛒", unlockScore: 0, playable: true, connectsTo: null, angleDeg: 0, radius: 0 },
   // Spoked ring nodes — connect to MemoMart and to their two ring neighbours.
-  // "6 Senses" lineup: this slot was ChooseMax, now repurposed for Time
-  // Detective (the Time-sense ring game) — ChooseMax's code stays on disk,
-  // just unhooked from App.tsx, in case it's ever brought back.
-  { id: "timedetective", name: "Time Detective", emoji: "⏳", unlockScore: 100, playable: true, connectsTo: "memomart", angleDeg: 90, radius: RING_RADIUS },
+  // "6 Senses" lineup: this slot was ChooseMax, then Time Detective, now
+  // Pulse (the Time-sense ring game) — both earlier occupants' code stays
+  // on disk, just unhooked from App.tsx, in case either is ever brought back.
+  { id: "pulse", name: "Pulse", emoji: "💓", unlockScore: 100, playable: true, connectsTo: "memomart", angleDeg: 90, radius: RING_RADIUS },
   { id: "game3", name: "MindFlip", emoji: "🔀", unlockScore: 200, playable: true, connectsTo: "memomart", angleDeg: 330, radius: RING_RADIUS },
   // FactFlip reverted to a locked placeholder — reserved for a future
   // Balance-sense game. FactFlip's own code stays on disk, unhooked from
@@ -63,7 +63,7 @@ export const GAME_NODES: GameNode[] = [
     angleDeg: 150,
     radius: RING_RADIUS,
     drawParentLine: false,
-    extraConnections: ["timedetective", "game4"],
+    extraConnections: ["pulse", "game4"],
   },
   {
     id: "game6",
@@ -75,7 +75,7 @@ export const GAME_NODES: GameNode[] = [
     angleDeg: 30,
     radius: RING_RADIUS,
     drawParentLine: false,
-    extraConnections: ["timedetective", "game3"],
+    extraConnections: ["pulse", "game3"],
   },
   {
     id: "game7",
