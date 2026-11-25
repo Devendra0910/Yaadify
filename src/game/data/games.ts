@@ -26,17 +26,17 @@ export interface GameNode {
 /**
  * The game hub's node graph is a hexagon, not a 6-spoke wheel: all six
  * surrounding games sit on one ring, 60° apart, and every adjacent pair on
- * that ring is connected — but only every *other* ring node (ChooseMax,
- * MindFlip, and the next game) also spokes back to MemoMart. The three
- * in-between ring nodes connect only to their two ring neighbours, so each
- * node ends up with at most 3 connections, 120° apart from its own point of
- * view, and the whole thing reads as a clean hexagon with alternating
- * spokes instead of one hub radiating six lines.
+ * that ring is connected — but only every *other* ring node also spokes
+ * back to MemoMart. The three in-between ring nodes connect only to their
+ * two ring neighbours, so each node ends up with at most 3 connections,
+ * 120° apart from its own point of view, and the whole thing reads as a
+ * clean hexagon with alternating spokes instead of one hub radiating six
+ * lines. The roster is capped here — MemoMart plus this one ring of 6 — with
+ * no further rings planned.
  *
  * Units are plain CSS pixels on a large pannable canvas (see GameHub.tsx),
  * not percentages — the map is bigger than one screen and the player
- * scrolls/drags around it, so deeper rings have room to spread out instead
- * of being squeezed into a single fixed-size viewport.
+ * scrolls/drags around it.
  */
 const RING_RADIUS = 180;
 
@@ -88,54 +88,6 @@ export const GAME_NODES: GameNode[] = [
     radius: RING_RADIUS,
     drawParentLine: false,
     extraConnections: ["game3", "game4"],
-  },
-  // Ring 2 — a mirror of ring 1's own pattern, one layer further out: three
-  // "spoke" nodes continue each ring-1 bridge outward (game5/6/7 each had
-  // spare capacity, degree 2, to grow one more connection), and three new
-  // "bridge" nodes sit between them, connecting only to their two ring-2
-  // neighbours — exactly how game5/6/7 themselves started. Every ring-2
-  // spoke ends up at degree 3 just like ring 1; every ring-2 bridge sits at
-  // degree 2 with the same spare capacity to grow a ring 3 later. The whole
-  // hub is a true honeycomb this way: self-similar at every ring, built
-  // from the same "each node connects to at most 3 others" rule throughout.
-  { id: "game8", name: "???", emoji: "🔒", unlockScore: 700, playable: false, connectsTo: "game5", angleDeg: 150, radius: 150 },
-  { id: "game9", name: "???", emoji: "🔒", unlockScore: 800, playable: false, connectsTo: "game6", angleDeg: 30, radius: 150 },
-  { id: "game10", name: "???", emoji: "🔒", unlockScore: 900, playable: false, connectsTo: "game7", angleDeg: 270, radius: 150 },
-  {
-    id: "game11",
-    name: "???",
-    emoji: "🔒",
-    unlockScore: 1000,
-    playable: false,
-    connectsTo: "memomart",
-    angleDeg: 90,
-    radius: 330,
-    drawParentLine: false,
-    extraConnections: ["game8", "game9"],
-  },
-  {
-    id: "game12",
-    name: "???",
-    emoji: "🔒",
-    unlockScore: 1100,
-    playable: false,
-    connectsTo: "memomart",
-    angleDeg: 330,
-    radius: 330,
-    drawParentLine: false,
-    extraConnections: ["game9", "game10"],
-  },
-  {
-    id: "game13",
-    name: "???",
-    emoji: "🔒",
-    unlockScore: 1200,
-    playable: false,
-    connectsTo: "memomart",
-    angleDeg: 210,
-    radius: 330,
-    drawParentLine: false,
-    extraConnections: ["game10", "game8"],
   },
 ];
 
