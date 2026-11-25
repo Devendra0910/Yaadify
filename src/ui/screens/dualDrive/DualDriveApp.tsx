@@ -6,7 +6,6 @@ import {
   type FailReason,
   type GameState,
   type RoadId,
-  type Tier,
 } from "../../../game/dualDrive/engine";
 import { DualDriveSave } from "../../../game/dualDrive/save";
 import type { DualDriveSaveData } from "../../../game/dualDrive/save";
@@ -14,12 +13,6 @@ import { SoundManager } from "../../../game/systems/SoundManager";
 import "./dualDrive.css";
 
 type Screen = "setup" | "countdown" | "playing" | "paused" | "gameOver";
-
-const TIERS: { id: Tier; label: string; hint: string }[] = [
-  { id: "easy", label: "Easy", hint: "Slow start, plenty of room" },
-  { id: "medium", label: "Medium", hint: "Both roads need attention" },
-  { id: "hard", label: "Hard", hint: "Fast, frequent switches" },
-];
 
 const CAR_COLORS: Record<RoadId, string> = { red: "#e5533d", blue: "#2e7fd9" };
 const MAX_DT_MS = 50;
@@ -290,7 +283,7 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
   }, [loop, stopLoop]);
 
   const begin = useCallback(() => {
-    stateRef.current = createGameState(settings.startTier);
+    stateRef.current = createGameState();
     visualLaneRef.current = { red: 0, blue: 0 };
     let n = 3;
     setCountdown(n);
@@ -310,7 +303,7 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
       setCountdown(n);
       if (settings.soundOn) SoundManager.countdownTick();
     }, 700);
-  }, [resizeCanvas, settings.soundOn, settings.startTier, startLoop]);
+  }, [resizeCanvas, settings.soundOn, startLoop]);
 
   const pause = useCallback(() => {
     if (screenRef.current !== "playing") return;
@@ -334,11 +327,6 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
 
   useEffect(() => stopLoop, [stopLoop]);
 
-  function selectTier(tier: Tier) {
-    DualDriveSave.setStartTier(tier);
-    setSettings((prev) => ({ ...prev, startTier: tier }));
-  }
-
   function dismissTutorial() {
     DualDriveSave.setTutorialSeen();
     setSettings((prev) => ({ ...prev, tutorialSeen: true }));
@@ -361,18 +349,6 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
                 <div className="result-row-label">Best Score</div>
                 <div className="title-md">{settings.bestScore}</div>
               </div>
-            </div>
-            <div className="dd-tier-grid">
-              {TIERS.map((tier) => (
-                <button
-                  key={tier.id}
-                  className={`dd-tier-btn ${settings.startTier === tier.id ? "dd-tier-btn--active" : ""}`}
-                  onClick={() => selectTier(tier.id)}
-                >
-                  <strong>{tier.label}</strong>
-                  <span>{tier.hint}</span>
-                </button>
-              ))}
             </div>
           </div>
           <div style={{ flex: 1 }} />
@@ -430,7 +406,6 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
               <div><small>Survived</small><strong>{(result.survivalMs / 1000).toFixed(1)}s</strong></div>
             </div>
             <button className="btn btn--primary btn--block" onClick={begin}>↻ Play again</button>
-            <button className="btn btn--outline btn--block" onClick={() => setScreen("setup")}>Change difficulty</button>
             <button className="btn btn--outline btn--block" onClick={onExit}>Exit to Hub</button>
           </div>
         </div>

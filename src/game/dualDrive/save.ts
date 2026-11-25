@@ -1,5 +1,4 @@
 import { recordHubScore, resetHubScore } from "../systems/HubScores";
-import type { Tier } from "./engine";
 
 const STORAGE_KEY = "memomart-dualdrive-save-v1";
 export const DUAL_DRIVE_ID = "game6";
@@ -7,7 +6,6 @@ export const DUAL_DRIVE_ID = "game6";
 export interface DualDriveSaveData {
   bestScore: number;
   bestSurvivalMs: number;
-  startTier: Tier;
   soundOn: boolean;
   vibrationOn: boolean;
   tutorialSeen: boolean;
@@ -16,7 +14,6 @@ export interface DualDriveSaveData {
 const DEFAULT_SAVE: DualDriveSaveData = {
   bestScore: 0,
   bestSurvivalMs: 0,
-  startTier: "easy",
   soundOn: true,
   vibrationOn: true,
   tutorialSeen: false,
@@ -59,10 +56,6 @@ export const DualDriveSave = {
     if (survivalMs > data.bestSurvivalMs) data.bestSurvivalMs = survivalMs;
     persist(data);
     return { isNewBest };
-  },
-
-  setStartTier(startTier: Tier): void {
-    persist({ ...loadRaw(), startTier });
   },
 
   setSoundOn(soundOn: boolean): void {

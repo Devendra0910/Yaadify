@@ -12,23 +12,21 @@ import {
   toggleLane,
 } from "../src/game/dualDrive/engine.ts";
 
-function generateSequence(seed, tier, count, score = 0) {
+function generateSequence(seed, count, score = 0) {
   const gen = createRoadGen(seed);
-  const difficulty = resolveDifficulty(tier, score);
+  const difficulty = resolveDifficulty(score);
   const events = [];
   for (let i = 0; i < count; i++) events.push(generateNextEvent(gen, difficulty));
   return events;
 }
 
 test("10,000 independently seeded obstacle sequences are all provably solvable", () => {
-  const tiers = ["easy", "medium", "hard"];
   let totalEvents = 0;
   for (let seed = 1; seed <= 10_000; seed++) {
-    const tier = tiers[seed % tiers.length];
-    const score = (seed * 7) % 120; // exercise a spread of difficulty-ramp positions too
-    const events = generateSequence(seed, tier, 60, score);
+    const score = (seed * 7) % 200; // exercise a spread of difficulty-ramp positions too
+    const events = generateSequence(seed, 60, score);
     const problems = auditEvents(events);
-    assert.deepEqual(problems, [], `seed ${seed} (${tier}, score ${score}): ${problems.join("; ")}`);
+    assert.deepEqual(problems, [], `seed ${seed} (score ${score}): ${problems.join("; ")}`);
     totalEvents += events.length;
   }
   assert.ok(totalEvents >= 10_000 * 60);
@@ -36,7 +34,7 @@ test("10,000 independently seeded obstacle sequences are all provably solvable",
 
 test("a road never schedules two mandatory shapes in the same row", () => {
   for (let seed = 1; seed <= 500; seed++) {
-    const events = generateSequence(seed, "hard", 80, 60);
+    const events = generateSequence(seed, 80, 60);
     for (const event of events) {
       assert.ok(!(event.lane0 === "circle" && event.lane1 === "circle"));
       assert.ok(!(event.lane0 === "square" && event.lane1 === "square"));
@@ -47,26 +45,28 @@ test("a road never schedules two mandatory shapes in the same row", () => {
 
 test("difficulty ramps smoothly with score and always stays within the hard cap", () => {
   const steps = [];
-  for (let score = 0; score <= 120; score += 5) steps.push(resolveDifficulty("easy", score));
+  for (let score = 0; score <= 200; score += 5) steps.push(resolveDifficulty(score));
   for (let i = 1; i < steps.length; i++) {
     assert.ok(steps[i].speed >= steps[i - 1].speed - 1e-9, "speed should never go down as score rises");
     assert.ok(steps[i].minGapSwitch <= steps[i - 1].minGapSwitch + 1e-9, "gaps should never widen as score rises");
   }
-  const capped = resolveDifficulty("easy", 10_000);
-  const hard = resolveDifficulty("hard", 10_000);
-  assert.ok(Math.abs(capped.speed - hard.speed) < 1e-9, "every tier converges to the same cap eventually");
+  const capped = resolveDifficulty(10_000);
   assert.ok(capped.minGapSwitch >= 600, "the cap never drops below a human-reactable minimum");
 });
 
-test("choosing a starting tier changes where the ramp begins, not where it ends", () => {
-  const easyStart = resolveDifficulty("easy", 0);
-  const hardStart = resolveDifficulty("hard", 0);
-  assert.ok(hardStart.speed > easyStart.speed);
-  assert.ok(hardStart.minGapSwitch < easyStart.minGapSwitch);
+test("at the base difficulty, consecutive same-lane gaps keep at most ~1-2 objects visible on a typical screen", () => {
+  const difficulty = resolveDifficulty(0);
+  const referenceScreenHeight = 800;
+  const sameGapPx = difficulty.minGapSame * difficulty.speed;
+  const switchGapPx = difficulty.minGapSwitch * difficulty.speed;
+  // "1-2 visible" means the pixel gap between rows should be a sizeable
+  // fraction of the screen, not a tiny sliver that lets many stack up.
+  assert.ok(sameGapPx >= referenceScreenHeight * 0.35, `same-lane gap only ${sameGapPx}px`);
+  assert.ok(switchGapPx >= referenceScreenHeight * 0.35, `switch gap only ${switchGapPx}px`);
 });
 
 test("collecting a circle in the matching lane scores a point and removes it", () => {
-  const state = createGameState("easy", 1);
+  const state = createGameState(1);
   setLane(state, "red", state.red.events[0]?.requiredLane ?? 0);
   // Drive to just before the first event, confirm no premature scoring, then past it.
   const first = state.red.events[0];
@@ -81,7 +81,7 @@ test("collecting a circle in the matching lane scores a point and removes it", (
 });
 
 test("independent car movement: switching one road's lane never touches the other", () => {
-  const state = createGameState("easy", 2);
+  const state = createGameState(2);
   setLane(state, "red", 1);
   assert.equal(state.red.car.lane, 1);
   assert.equal(state.blue.car.lane, 0);
@@ -94,20 +94,20 @@ test("independent car movement: switching one road's lane never touches the othe
 });
 
 test("simultaneous controls: both lanes can be set in the same tick with no cross-talk", () => {
-  const state = createGameState("medium", 3);
+  const state = createGameState(3);
   setLane(state, "red", 1);
   setLane(state, "blue", 0);
   assert.deepEqual([state.red.car.lane, state.blue.car.lane], [1, 0]);
 });
 
 test("a square in the car's lane ends the run as a collision", () => {
-  const state = createGameState("easy", 5);
+  const state = createGameState(5);
   // Scan ahead on the same generator stream for a square-only row, then
   // replace the road's schedule with just that one event so no earlier
   // (mismatched-lane) row resolves first.
   let target = null;
   while (!target) {
-    const difficulty = resolveDifficulty("easy", 0);
+    const difficulty = resolveDifficulty(0);
     const event = generateNextEvent(state.red.gen, difficulty);
     if (event.lane0 === "square" || event.lane1 === "square") target = event;
   }
@@ -121,12 +121,12 @@ test("a square in the car's lane ends the run as a collision", () => {
 });
 
 test("missing a circle (being in the wrong lane) does not end the run", () => {
-  const state = createGameState("easy", 6);
+  const state = createGameState(6);
   // Scan for a circle-only row (no paired square), so being in the wrong
   // lane has no collision risk — just a forfeited point.
   let target = null;
   while (!target) {
-    const difficulty = resolveDifficulty("easy", 0);
+    const difficulty = resolveDifficulty(0);
     const event = generateNextEvent(state.red.gen, difficulty);
     const hasCircle = event.lane0 === "circle" || event.lane1 === "circle";
     const hasSquare = event.lane0 === "square" || event.lane1 === "square";
@@ -150,17 +150,17 @@ test("missing a circle (being in the wrong lane) does not end the run", () => {
 });
 
 test("scoring accuracy: a perfect run accumulates an integer score with no double counting", () => {
-  const final = simulatePerfectRun(11, "medium", 20_000);
+  const final = simulatePerfectRun(11, 20_000);
   assert.equal(final.gameOver, false, final.failReason ?? "");
   assert.ok(final.score > 0);
   assert.ok(Number.isInteger(final.score));
 });
 
 test("a coin's value is locked in at spawn and starts at 1, climbing toward the cap with score", () => {
-  const low = resolveDifficulty("easy", 0);
-  const mid = resolveDifficulty("easy", 50);
-  const high = resolveDifficulty("easy", 100);
-  const veryHigh = resolveDifficulty("easy", 1000);
+  const low = resolveDifficulty(0);
+  const mid = resolveDifficulty(50);
+  const high = resolveDifficulty(100);
+  const veryHigh = resolveDifficulty(1000);
   assert.equal(low.coinValue, 1);
   assert.ok(mid.coinValue >= low.coinValue);
   assert.equal(high.coinValue, 4);
@@ -172,13 +172,13 @@ test("a coin's value is locked in at spawn and starts at 1, climbing toward the 
 });
 
 test("collecting a circle awards its own locked-in coinValue, not a flat 1 point", () => {
-  const state = createGameState("easy", 321);
+  const state = createGameState(321);
   // Push score up so later coins are worth more than 1, then confirm an
   // actual collection awards exactly that coin's value.
-  state.score = 60;
+  state.score = 100;
   let target = null;
   while (!target) {
-    const difficulty = resolveDifficulty("easy", state.score);
+    const difficulty = resolveDifficulty(state.score);
     const event = generateNextEvent(state.red.gen, difficulty);
     if ((event.lane0 === "circle" || event.lane1 === "circle") && event.coinValue > 1) target = event;
   }
@@ -202,18 +202,16 @@ test("collecting a circle awards its own locked-in coinValue, not a flat 1 point
   assert.ok(target.coinValue > 1);
 });
 
-test("1,000 perfect-play simulations across all tiers never end in an unavoidable game over", () => {
-  const tiers = ["easy", "medium", "hard"];
+test("1,000 perfect-play simulations never end in an unavoidable game over", () => {
   for (let seed = 1; seed <= 1000; seed++) {
-    const tier = tiers[seed % tiers.length];
-    const final = simulatePerfectRun(seed, tier, 15_000);
-    assert.equal(final.gameOver, false, `seed ${seed} (${tier}): ${final.failReason}`);
+    const final = simulatePerfectRun(seed, 15_000);
+    assert.equal(final.gameOver, false, `seed ${seed}: ${final.failReason}`);
   }
 });
 
 test("pausing (simply not calling step) never affects the eventual outcome, only dt does", () => {
-  const continuous = createGameState("medium", 42);
-  const withPauses = createGameState("medium", 42);
+  const continuous = createGameState(42);
+  const withPauses = createGameState(42);
   const frames = 400;
   for (let i = 0; i < frames; i++) {
     const upcomingA = continuous.red.events.find((e) => !e.resolved);
@@ -229,15 +227,15 @@ test("pausing (simply not calling step) never affects the eventual outcome, only
 });
 
 test("restart behaviour: the same seed reproduces an identical run deterministically", () => {
-  const a = simulatePerfectRun(777, "hard", 10_000);
-  const b = simulatePerfectRun(777, "hard", 10_000);
+  const a = simulatePerfectRun(777, 10_000);
+  const b = simulatePerfectRun(777, 10_000);
   assert.equal(a.score, b.score);
   assert.equal(a.gameOver, b.gameOver);
   assert.equal(a.now, b.now);
 });
 
 test("a dt of zero is a safe no-op", () => {
-  const state = createGameState("easy", 9);
+  const state = createGameState(9);
   const before = JSON.stringify({ score: state.score, now: state.now, gameOver: state.gameOver });
   step(state, 0);
   const after = JSON.stringify({ score: state.score, now: state.now, gameOver: state.gameOver });
@@ -245,10 +243,10 @@ test("a dt of zero is a safe no-op", () => {
 });
 
 test("step() is a no-op once the game is already over", () => {
-  const state = createGameState("easy", 6);
+  const state = createGameState(6);
   let target = null;
   while (!target) {
-    const difficulty = resolveDifficulty("easy", 0);
+    const difficulty = resolveDifficulty(0);
     const event = generateNextEvent(state.red.gen, difficulty);
     if (event.lane0 === "square" || event.lane1 === "square") target = event;
   }

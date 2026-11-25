@@ -6,7 +6,6 @@
 export type Lane = 0 | 1;
 export type RoadId = "red" | "blue";
 export type ObjectType = "circle" | "square";
-export type Tier = "easy" | "medium" | "hard";
 export type FailReason = "red-collision" | "blue-collision";
 
 /** A single scheduled obstacle row for one road. `requiredLane` is the lane
@@ -51,7 +50,7 @@ export interface Difficulty {
   coinValue: number;
 }
 
-interface TierBase {
+interface BaseDifficulty {
   speed: number;
   minGapSame: number;
   minGapSwitch: number;
@@ -60,19 +59,17 @@ interface TierBase {
   squareOnlyChance: number;
 }
 
-/** Starting points per chosen tier — "mostly one decision at a time" for
- * easy, both roads needing attention for medium, frequent switches for hard. */
-const TIER_BASE: Record<Tier, TierBase> = {
-  easy: { speed: 0.09, minGapSame: 1300, minGapSwitch: 1800, switchChance: 0.18, dualChance: 0.03, squareOnlyChance: 0.1 },
-  medium: { speed: 0.13, minGapSame: 1000, minGapSwitch: 1350, switchChance: 0.35, dualChance: 0.15, squareOnlyChance: 0.18 },
-  hard: { speed: 0.17, minGapSame: 800, minGapSwitch: 1050, switchChance: 0.5, dualChance: 0.28, squareOnlyChance: 0.22 },
-};
+/** The single starting difficulty — gaps are sized (relative to speed) so
+ * only about 1-2 objects are ever visible on a lane at once, rather than a
+ * dense field of them. */
+const BASE_DIFFICULTY: BaseDifficulty = { speed: 0.09, minGapSame: 4800, minGapSwitch: 5600, switchChance: 0.18, dualChance: 0.03, squareOnlyChance: 0.1 };
 
-/** The ceiling every tier ramps toward — difficulty keeps climbing smoothly
- * with score but never goes below a human-reactable minimum gap. */
-const HARD_CAP: TierBase = { speed: 0.22, minGapSame: 550, minGapSwitch: 700, switchChance: 0.55, dualChance: 0.35, squareOnlyChance: 0.28 };
+/** The ceiling difficulty ramps toward — still keeps roughly 1-2 objects
+ * visible at once (gaps shrink more slowly than speed grows), and never
+ * drops below a human-reactable minimum gap. */
+const HARD_CAP: BaseDifficulty = { speed: 0.16, minGapSame: 2000, minGapSwitch: 2500, switchChance: 0.4, dualChance: 0.15, squareOnlyChance: 0.18 };
 
-/** Score at which difficulty fully reaches the hard cap, regardless of starting tier. */
+/** Score at which difficulty fully reaches the hard cap. */
 const RAMP_SCORE = 100;
 
 /** The highest a circle's point value ever climbs to, reached alongside the
@@ -83,16 +80,15 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-export function resolveDifficulty(tier: Tier, score: number): Difficulty {
-  const base = TIER_BASE[tier];
+export function resolveDifficulty(score: number): Difficulty {
   const t = Math.min(1, Math.max(0, score) / RAMP_SCORE);
   return {
-    speed: lerp(base.speed, HARD_CAP.speed, t),
-    minGapSame: lerp(base.minGapSame, HARD_CAP.minGapSame, t),
-    minGapSwitch: lerp(base.minGapSwitch, HARD_CAP.minGapSwitch, t),
-    switchChance: lerp(base.switchChance, HARD_CAP.switchChance, t),
-    dualChance: lerp(base.dualChance, HARD_CAP.dualChance, t),
-    squareOnlyChance: lerp(base.squareOnlyChance, HARD_CAP.squareOnlyChance, t),
+    speed: lerp(BASE_DIFFICULTY.speed, HARD_CAP.speed, t),
+    minGapSame: lerp(BASE_DIFFICULTY.minGapSame, HARD_CAP.minGapSame, t),
+    minGapSwitch: lerp(BASE_DIFFICULTY.minGapSwitch, HARD_CAP.minGapSwitch, t),
+    switchChance: lerp(BASE_DIFFICULTY.switchChance, HARD_CAP.switchChance, t),
+    dualChance: lerp(BASE_DIFFICULTY.dualChance, HARD_CAP.dualChance, t),
+    squareOnlyChance: lerp(BASE_DIFFICULTY.squareOnlyChance, HARD_CAP.squareOnlyChance, t),
     coinValue: 1 + Math.floor(t * (COIN_VALUE_CAP - 1) * (1 + 1e-9)),
   };
 }
@@ -166,12 +162,13 @@ export function generateNextEvent(state: RoadGenState, difficulty: Difficulty): 
   return event;
 }
 
-/** How far ahead (ms) the schedule is always kept generated. Tripled from
- * the original 4000ms so a freshly spawned object's on-screen position
- * (carY - horizon*speed) starts beyond the top edge of the screen instead
- * of popping in partway down it — especially now that lower speeds cover
- * less pixel distance for the same time horizon. */
-const HORIZON_MS = 12000;
+/** How far ahead (ms) the schedule is always kept generated — just enough
+ * that a freshly spawned object's position (carY - horizon*speed) starts
+ * at or beyond the top edge of a typical screen. Any extra lookahead is
+ * harmless (the renderer culls anything above the visible area), and gaps
+ * being wide relative to this horizon are what keeps only 1-2 objects
+ * visible on a lane at once rather than a dense field of them. */
+const HORIZON_MS = 8000;
 /** How long a resolved event is kept around before being purged, so a
  * collected/avoided shape can still render its fade-out briefly. */
 const LOOKBACK_MS = 600;
@@ -187,7 +184,6 @@ export interface RoadState {
 }
 
 export interface GameState {
-  tier: Tier;
   red: RoadState;
   blue: RoadState;
   now: number;
@@ -196,9 +192,8 @@ export interface GameState {
   failReason: FailReason | null;
 }
 
-export function createGameState(tier: Tier, seed = Date.now()): GameState {
+export function createGameState(seed = Date.now()): GameState {
   const state: GameState = {
-    tier,
     red: { gen: createRoadGen(seed >>> 0), events: [], car: { lane: 0 } },
     blue: { gen: createRoadGen((seed + 0x9e3779b9) >>> 0), events: [], car: { lane: 0 } },
     now: 0,
@@ -209,7 +204,7 @@ export function createGameState(tier: Tier, seed = Date.now()): GameState {
   // Populate the initial horizon immediately so the very first render (or a
   // test inspecting events before the first step()) already has a schedule,
   // not an empty array.
-  const difficulty = resolveDifficulty(tier, 0);
+  const difficulty = resolveDifficulty(0);
   ensureEvents(state.red, 0, difficulty);
   ensureEvents(state.blue, 0, difficulty);
   return state;
@@ -256,7 +251,7 @@ function resolveRoad(road: RoadState, now: number, onScore: (points: number) => 
 export function step(state: GameState, dtMs: number): GameState {
   if (state.gameOver) return state;
   state.now += dtMs;
-  const difficulty = resolveDifficulty(state.tier, state.score);
+  const difficulty = resolveDifficulty(state.score);
   ensureEvents(state.red, state.now, difficulty);
   ensureEvents(state.blue, state.now, difficulty);
 
@@ -322,8 +317,8 @@ export function auditEvents(events: readonly TrackEvent[]): string[] {
  * path (not just the generator) for durationMs of simulated play, always
  * snapping to whatever lane the upcoming event requires as soon as it is
  * generated. Used as an integration-level solvability sanity check. */
-export function simulatePerfectRun(seed: number, tier: Tier, durationMs: number): GameState {
-  const state = createGameState(tier, seed);
+export function simulatePerfectRun(seed: number, durationMs: number): GameState {
+  const state = createGameState(seed);
   const stepMs = 16;
   for (let elapsed = 0; elapsed < durationMs && !state.gameOver; elapsed += stepMs) {
     for (const road of ["red", "blue"] as const) {
