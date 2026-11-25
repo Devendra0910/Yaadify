@@ -43,9 +43,15 @@ const RING_RADIUS = 180;
 export const GAME_NODES: GameNode[] = [
   { id: "memomart", name: "MemoMart", emoji: "🛒", unlockScore: 0, playable: true, connectsTo: null, angleDeg: 0, radius: 0 },
   // Spoked ring nodes — connect to MemoMart and to their two ring neighbours.
-  { id: "game2", name: "ChooseMax", emoji: "🔢", unlockScore: 100, playable: true, connectsTo: "memomart", angleDeg: 90, radius: RING_RADIUS },
+  // "6 Senses" lineup: this slot was ChooseMax, now repurposed for Time
+  // Detective (the Time-sense ring game) — ChooseMax's code stays on disk,
+  // just unhooked from App.tsx, in case it's ever brought back.
+  { id: "timedetective", name: "Time Detective", emoji: "⏳", unlockScore: 100, playable: true, connectsTo: "memomart", angleDeg: 90, radius: RING_RADIUS },
   { id: "game3", name: "MindFlip", emoji: "🔀", unlockScore: 200, playable: true, connectsTo: "memomart", angleDeg: 330, radius: RING_RADIUS },
-  { id: "game4", name: "FactFlip", emoji: "✅", unlockScore: 300, playable: true, connectsTo: "memomart", angleDeg: 210, radius: RING_RADIUS },
+  // FactFlip reverted to a locked placeholder — reserved for a future
+  // Balance-sense game. FactFlip's own code stays on disk, unhooked from
+  // App.tsx, in case it's ever brought back instead.
+  { id: "game4", name: "???", emoji: "🔒", unlockScore: 300, playable: false, connectsTo: "memomart", angleDeg: 210, radius: RING_RADIUS },
   // Bridging ring nodes — connect only to their two ring neighbours, no spoke to MemoMart.
   {
     id: "game5",
@@ -57,7 +63,7 @@ export const GAME_NODES: GameNode[] = [
     angleDeg: 150,
     radius: RING_RADIUS,
     drawParentLine: false,
-    extraConnections: ["game2", "game4"],
+    extraConnections: ["timedetective", "game4"],
   },
   {
     id: "game6",
@@ -69,7 +75,7 @@ export const GAME_NODES: GameNode[] = [
     angleDeg: 30,
     radius: RING_RADIUS,
     drawParentLine: false,
-    extraConnections: ["game2", "game3"],
+    extraConnections: ["timedetective", "game3"],
   },
   {
     id: "game7",

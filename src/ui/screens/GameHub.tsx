@@ -134,7 +134,7 @@ export function GameHub({
           </svg>
 
           {nodes.map((node) => {
-            const unlocked = isGameUnlocked(node, totalScore) || isEverUnlocked(node.id);
+            const unlocked = node.playable && (isGameUnlocked(node, totalScore) || isEverUnlocked(node.id));
             const isRoot = node.connectsTo === null;
             // Only reveal a score once the game is actually unlocked — a "???"
             // placeholder shouldn't leak that it secretly has a score of 0.

@@ -21,12 +21,12 @@ test("saved scores halve every hour and tolerate clock rollback", () => {
 test("the sum of active scores across Yaadify decays and can relock a game", () => {
   const existing = { memomart: 130, game2: 80, game3: 80, game4: 60, game5: 50 };
   const total = (time) => Object.values(readHubScores(existing, time)).reduce((sum, value) => sum + value, 0);
-  const factFlip = GAME_NODES.find((node) => node.id === "game4");
-  assert.ok(factFlip.playable);
+  const soundDetective = GAME_NODES.find((node) => node.id === "game5");
+  assert.ok(soundDetective.playable);
   assert.equal(total(start), 400);
-  assert.ok(total(start) >= factFlip.unlockScore);
+  assert.ok(total(start) >= soundDetective.unlockScore);
   assert.equal(total(start + hour), 200);
-  assert.ok(total(start + hour) < factFlip.unlockScore);
+  assert.ok(total(start + hour) < soundDetective.unlockScore);
 });
 
 test("a fresh run can restore an active score below an all-time high", () => {
@@ -56,7 +56,7 @@ test("Yaadify keeps MemoMart at the centre and unlocks each playable game at its
   const centre = GAME_NODES.find((node) => node.connectsTo === null);
   assert.equal(centre.id, "memomart");
   assert.ok(isGameUnlocked(centre, 0));
-  const milestones = { ChooseMax: 100, MindFlip: 200, FactFlip: 300, "Sound Detective": 400, "Dual Drive": 500 };
+  const milestones = { "Time Detective": 100, MindFlip: 200, "Sound Detective": 400, "Dual Drive": 500 };
   const playable = GAME_NODES.filter((node) => node.playable && node !== centre);
   assert.equal(playable.length, Object.keys(milestones).length);
   for (const node of playable) {

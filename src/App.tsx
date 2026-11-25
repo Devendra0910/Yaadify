@@ -9,9 +9,8 @@ import { ShoppingHUD } from "./ui/screens/ShoppingHUD";
 import { ShoppingGrid } from "./ui/screens/ShoppingGrid";
 import { GameOverScreen } from "./ui/screens/GameOverScreen";
 import { PauseMenu } from "./ui/screens/PauseMenu";
-import { ChooseMaxGame } from "./ui/screens/ChooseMaxGame";
 import { MindFlipApp } from "./ui/screens/mindflip/MindFlipApp";
-import { FactFlipApp } from "./ui/screens/factflip/FactFlipApp";
+import { TimeDetectiveApp } from "./ui/screens/timeDetective/TimeDetectiveApp";
 import { SoundDetectiveApp } from "./ui/screens/soundDetective/SoundDetectiveApp";
 import { detectiveBest, loadDetective, resetDetective, SOUND_DETECTIVE_ID } from "./game/soundDetective/save";
 import { DualDriveApp } from "./ui/screens/dualDrive/DualDriveApp";
@@ -20,9 +19,8 @@ import { readHubScores, resetUnlocked } from "./game/systems/HubScores";
 import { gameBridge, BridgeEvents } from "./game/GameBridge";
 import { GAME_NODES, isGameUnlocked } from "./game/data/games";
 import { SaveSystem } from "./game/systems/SaveSystem";
-import { ChooseMaxSave } from "./game/systems/ChooseMaxSave";
 import { MindFlipSave, mindflipHubScore } from "./game/systems/MindFlipSave";
-import { FactFlipSave, factflipHubScore } from "./game/systems/FactFlipSave";
+import { TimeDetectiveSave, timeDetectiveHubScore } from "./game/systems/TimeDetectiveSave";
 import { SoundManager } from "./game/systems/SoundManager";
 import type {
   GameOverPayload,
@@ -35,14 +33,13 @@ import type {
   ShoppingTickPayload,
 } from "./game/types";
 
-type Screen = "loading" | "hub" | "menu" | "memorize" | "shopping" | "gameOver" | "chooseMax" | "mindflip" | "factflip" | "soundDetective" | "dualDrive";
+type Screen = "loading" | "hub" | "menu" | "memorize" | "shopping" | "gameOver" | "mindflip" | "timeDetective" | "soundDetective" | "dualDrive";
 
 function loadGameScores() {
   return readHubScores({
     memomart: SaveSystem.load().bestRunScore,
-    game2: ChooseMaxSave.load().bestScore,
+    timedetective: timeDetectiveHubScore(TimeDetectiveSave.load()),
     game3: mindflipHubScore(MindFlipSave.load()),
-    game4: factflipHubScore(FactFlipSave.load()),
     [SOUND_DETECTIVE_ID]: detectiveBest(loadDetective()),
     [DUAL_DRIVE_ID]: dualDriveHubScore(DualDriveSave.load()),
   });
@@ -189,7 +186,7 @@ export default function App() {
       pauseGame();
     } else if (screen === "soundDetective") {
       leaveDetective();
-    } else if (screen === "menu" || screen === "chooseMax" || screen === "mindflip" || screen === "factflip" || screen === "dualDrive") {
+    } else if (screen === "menu" || screen === "mindflip" || screen === "timeDetective" || screen === "dualDrive") {
       setScreen("hub");
     } else if (screen === "hub" && Capacitor.isNativePlatform()) {
       void CapacitorApp.exitApp();
@@ -257,18 +254,16 @@ export default function App() {
           totalScore={totalScore}
           onSelectGame={(gameId) => {
             if (gameId === "memomart") setScreen("menu");
-            else if (gameId === "game2") setScreen("chooseMax");
+            else if (gameId === "timedetective") setScreen("timeDetective");
             else if (gameId === "game3") setScreen("mindflip");
-            else if (gameId === "game4") setScreen("factflip");
             else if (gameId === SOUND_DETECTIVE_ID) setScreen("soundDetective");
             else if (gameId === DUAL_DRIVE_ID) setScreen("dualDrive");
           }}
           onLockedTap={showHubMessage}
           onResetAll={() => {
             SaveSystem.reset();
-            ChooseMaxSave.reset();
+            TimeDetectiveSave.reset();
             MindFlipSave.reset();
-            FactFlipSave.reset();
             resetDetective();
             DualDriveSave.reset();
             resetUnlocked();
@@ -279,11 +274,9 @@ export default function App() {
         />
       )}
 
-      {screen === "chooseMax" && <ChooseMaxGame onExit={() => setScreen("hub")} />}
-
       {screen === "mindflip" && <MindFlipApp onExit={() => setScreen("hub")} />}
 
-      {screen === "factflip" && <FactFlipApp onExit={() => setScreen("hub")} />}
+      {screen === "timeDetective" && <TimeDetectiveApp onExit={() => setScreen("hub")} />}
 
       {screen === "dualDrive" && <DualDriveApp onExit={() => setScreen("hub")} />}
 
