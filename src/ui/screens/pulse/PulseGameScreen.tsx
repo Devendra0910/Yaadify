@@ -4,7 +4,6 @@ import { needlePositionMs, SCALE_MAX_MS } from "../../../game/systems/pulseEngin
 import { PauseMenu } from "../PauseMenu";
 
 export interface PulseRunResult {
-  totalScore: number;
   stats: PulseRunStats;
   isNewBest: boolean;
 }
@@ -26,7 +25,7 @@ export function PulseGameScreen({ onFinished }: { onFinished: (result: PulseRunR
 
   useEffect(() => {
     if (engine.phase === "ended") {
-      onFinished({ totalScore: engine.totalScore, stats: engine.stats, isNewBest: engine.isNewBest });
+      onFinished({ stats: engine.stats, isNewBest: engine.isNewBest });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine.phase]);
@@ -57,18 +56,18 @@ export function PulseGameScreen({ onFinished }: { onFinished: (result: PulseRunR
     engine.lockEstimate(needlePositionMs(elapsed));
   }
 
-  // Keyboard: Space/Enter locks in the estimate.
+  // Keyboard: Space/Enter locks in the estimate, or advances past a reveal.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        lockIn();
-      }
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      if (engine.phase === "estimating") lockIn();
+      else if (engine.phase === "revealed") engine.advance();
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [engine.phase, engine.estimatingStartedAt]);
+  }, [engine.phase, engine.estimatingStartedAt, engine.advance]);
 
   const stageLabel =
     engine.phase === "pulsing" ? "Watch it pulse…" : engine.phase === "estimating" ? "Tap when the needle feels right" : "Reveal";
@@ -84,7 +83,7 @@ export function PulseGameScreen({ onFinished }: { onFinished: (result: PulseRunR
           </div>
         </div>
         <div className="hud-run-row">
-          <div className="hud-pill">⭐ {engine.totalScore}</div>
+          <div className="hud-pill">🏆 Best {engine.bestRoundScore}</div>
           <div className="hud-pill">🎯 {engine.attempted}</div>
         </div>
       </div>
@@ -117,7 +116,7 @@ export function PulseGameScreen({ onFinished }: { onFinished: (result: PulseRunR
 
         {engine.phase === "revealed" && engine.lastRound && (
           <div className="pl-reveal">
-            <div className="pl-reveal-score">+{engine.lastRound.score}</div>
+            <div className="pl-reveal-score">{engine.lastRound.score} pts</div>
             <p className="pl-reveal-detail">
               Actual: {engine.lastRound.trueDurationMs}ms · You: {Math.round(engine.lastRound.estimatedMs)}ms · Off by{" "}
               {engine.lastRound.errorMs}ms
@@ -130,6 +129,14 @@ export function PulseGameScreen({ onFinished }: { onFinished: (result: PulseRunR
         <div className="pl-lockin-wrap">
           <button className="btn btn--primary btn--block" onClick={lockIn}>
             LOCK IN
+          </button>
+        </div>
+      )}
+
+      {engine.phase === "revealed" && (
+        <div className="pl-lockin-wrap">
+          <button className="btn btn--primary btn--block" onClick={engine.advance}>
+            Next ▶
           </button>
         </div>
       )}

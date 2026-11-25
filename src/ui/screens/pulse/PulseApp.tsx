@@ -51,9 +51,8 @@ export function PulseApp({ onExit }: { onExit: () => void }) {
   if (screen === "results" && lastResult) {
     return (
       <PulseResults
-        totalScore={lastResult.totalScore}
         stats={lastResult.stats}
-        bestScore={Math.max(save.bestScore, lastResult.totalScore)}
+        bestScore={Math.max(save.bestScore, lastResult.stats.bestRoundScore)}
         isNewBest={lastResult.isNewBest}
         onReplay={startRun}
         onHome={() => setScreen("home")}

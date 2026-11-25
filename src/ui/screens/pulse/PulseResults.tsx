@@ -15,14 +15,12 @@ function StatChip({ label, value }: { label: string; value: string | number }) {
 }
 
 export function PulseResults({
-  totalScore,
   stats,
   bestScore,
   isNewBest,
   onReplay,
   onHome,
 }: {
-  totalScore: number;
   stats: PulseRunStats;
   bestScore: number;
   isNewBest: boolean;
@@ -38,7 +36,7 @@ export function PulseResults({
         <h2 className="title-md" style={{ textAlign: "center" }}>
           Pulse Results
         </h2>
-        <div className="score-big">{totalScore}</div>
+        <div className="score-big">{stats.bestRoundScore}</div>
         {isNewBest && (
           <p className="subtitle" style={{ textAlign: "center", color: "var(--color-primary-dark)", fontWeight: 800 }}>
             🏆 New personal best!
@@ -47,7 +45,6 @@ export function PulseResults({
 
         <div className="result-row-group mf-stats-grid">
           <StatChip label="Rounds" value={stats.attempted} />
-          <StatChip label="Best Round" value={stats.bestRoundScore} />
           <StatChip label="Avg Error" value={`${stats.averageErrorMs}ms`} />
           <StatChip label="Closest Guess" value={stats.bestErrorMs === null ? "—" : `${stats.bestErrorMs}ms`} />
           <StatChip label="Personal Best" value={bestScore} />

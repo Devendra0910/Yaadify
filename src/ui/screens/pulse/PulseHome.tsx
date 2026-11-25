@@ -27,12 +27,8 @@ export function PulseHome({
       <div className="card" style={{ margin: "16px auto 0", maxWidth: 320, width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <div>
-            <div className="result-row-label">Best Total</div>
+            <div className="result-row-label">Best Score</div>
             <div className="title-md">{best.bestScore}</div>
-          </div>
-          <div>
-            <div className="result-row-label">Best Round</div>
-            <div className="title-md">{best.bestRoundScore}</div>
           </div>
           <div>
             <div className="result-row-label">Closest Ever</div>

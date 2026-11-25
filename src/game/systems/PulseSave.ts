@@ -2,14 +2,15 @@ import { recordHubScore, resetHubScore } from "./HubScores";
 const STORAGE_KEY = "memomart-pulse-save-v1";
 
 export interface PulseSaveData {
+  /** Highest single-round score ever achieved — not a session total, since
+   * a session has no round limit and a cumulative sum would just reward
+   * grinding more rounds rather than guessing accurately. */
   bestScore: number;
-  bestRoundScore: number;
   bestErrorMs: number | null;
 }
 
 const DEFAULT_SAVE: PulseSaveData = {
   bestScore: 0,
-  bestRoundScore: 0,
   bestErrorMs: null,
 };
 
@@ -42,12 +43,11 @@ export const PulseSave = {
     return loadRaw();
   },
 
-  recordRun(totalScore: number, bestRoundScore: number, bestErrorMs: number | null): { isNewBest: boolean } {
+  recordRun(bestRoundScore: number, bestErrorMs: number | null): { isNewBest: boolean } {
     const data = loadRaw();
-    recordHubScore("pulse", totalScore, data.bestScore);
-    const isNewBest = totalScore > data.bestScore;
-    if (isNewBest) data.bestScore = totalScore;
-    if (bestRoundScore > data.bestRoundScore) data.bestRoundScore = bestRoundScore;
+    recordHubScore("pulse", bestRoundScore, data.bestScore);
+    const isNewBest = bestRoundScore > data.bestScore;
+    if (isNewBest) data.bestScore = bestRoundScore;
     if (bestErrorMs !== null && (data.bestErrorMs === null || bestErrorMs < data.bestErrorMs)) {
       data.bestErrorMs = bestErrorMs;
     }
