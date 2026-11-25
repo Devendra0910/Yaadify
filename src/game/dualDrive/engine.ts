@@ -73,11 +73,11 @@ const HARD_CAP: BaseDifficulty = { minGapSame: 2000, minGapSwitch: 2500, switchC
  * and coin value follow their own formulas below and are never capped.) */
 const RAMP_SCORE = 100;
 
-/** speed = SPEED_K * sqrt(10 + score) — k is chosen so speed at score 0
- * matches the previous starting feel (0.09 px/ms), then grows with the
+/** speed = SPEED_K * sqrt(10 + score) — k is chosen so speed at score 0 is
+ * 3x the original starting feel (0.09 px/ms -> 0.27), then grows with the
  * square root of score instead of linearly ramping to a fixed cap. */
 const SPEED_OFFSET = 10;
-const SPEED_K = 0.09 / Math.sqrt(SPEED_OFFSET);
+const SPEED_K = (3 * 0.09) / Math.sqrt(SPEED_OFFSET);
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;

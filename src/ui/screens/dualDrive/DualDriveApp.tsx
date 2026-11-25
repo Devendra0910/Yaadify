@@ -19,6 +19,156 @@ const MAX_DT_MS = 50;
 const LANE_EASE = 0.28;
 const POP_DURATION_MS = 260;
 
+function mixColor(hex: string, amount: number, mixWith: "white" | "black"): string {
+  const m = hex.replace("#", "");
+  const r = parseInt(m.substring(0, 2), 16);
+  const g = parseInt(m.substring(2, 4), 16);
+  const b = parseInt(m.substring(4, 6), 16);
+  const target = mixWith === "white" ? 255 : 0;
+  const mix = (c: number) => Math.round(c + (target - c) * amount);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
+const lighten = (hex: string, amount: number) => mixColor(hex, amount, "white");
+const darken = (hex: string, amount: number) => mixColor(hex, amount, "black");
+
+function drawCoin(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, label: string, alpha: number) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  const gradient = ctx.createRadialGradient(cx - radius * 0.3, cy - radius * 0.35, radius * 0.15, cx, cy, radius);
+  gradient.addColorStop(0, "#ffe9a8");
+  gradient.addColorStop(0.55, "#f2a93a");
+  gradient.addColorStop(1, "#b5700f");
+  ctx.beginPath();
+  ctx.fillStyle = gradient;
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255,255,255,0.55)";
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.ellipse(cx - radius * 0.3, cy - radius * 0.35, radius * 0.35, radius * 0.2, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  if (label) {
+    ctx.font = "700 13px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#3a2300";
+    ctx.fillText(label, cx, cy + 1);
+    ctx.textBaseline = "alphabetic";
+  }
+  ctx.restore();
+}
+
+function drawObstacle(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  const rx = cx - size / 2;
+  const ry = cy - size / 2;
+  const r = 6;
+  ctx.save();
+  const gradient = ctx.createLinearGradient(0, ry, 0, ry + size);
+  gradient.addColorStop(0, "#e6554a");
+  gradient.addColorStop(1, "#7a1f1f");
+  ctx.beginPath();
+  ctx.moveTo(rx + r, ry);
+  ctx.arcTo(rx + size, ry, rx + size, ry + size, r);
+  ctx.arcTo(rx + size, ry + size, rx, ry + size, r);
+  ctx.arcTo(rx, ry + size, rx, ry, r);
+  ctx.arcTo(rx, ry, rx + size, ry, r);
+  ctx.closePath();
+  ctx.fillStyle = gradient;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255,255,255,0.5)";
+  ctx.stroke();
+
+  ctx.save();
+  ctx.clip();
+  ctx.strokeStyle = "rgba(255,255,255,0.12)";
+  ctx.lineWidth = size * 0.12;
+  for (let offset = -size; offset < size * 2; offset += size * 0.35) {
+    ctx.beginPath();
+    ctx.moveTo(rx + offset, ry + size);
+    ctx.lineTo(rx + offset + size, ry);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.font = `800 ${Math.round(size * 0.5)}px system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "white";
+  ctx.fillText("!", cx, cy + size * 0.03);
+  ctx.textBaseline = "alphabetic";
+  ctx.restore();
+}
+
+function drawCar(ctx: CanvasRenderingContext2D, carX: number, carY: number, carW: number, carH: number, baseColor: string) {
+  const cx0 = carX - carW / 2;
+  const cy0 = carY - carH / 2;
+  const r = 10;
+  ctx.save();
+
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.ellipse(carX, carY + carH / 2 + 4, carW * 0.42, carH * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const bodyGradient = ctx.createLinearGradient(0, cy0, 0, cy0 + carH);
+  bodyGradient.addColorStop(0, lighten(baseColor, 0.35));
+  bodyGradient.addColorStop(0.5, baseColor);
+  bodyGradient.addColorStop(1, darken(baseColor, 0.25));
+
+  ctx.beginPath();
+  ctx.moveTo(cx0 + r, cy0);
+  ctx.arcTo(cx0 + carW, cy0, cx0 + carW, cy0 + carH, r);
+  ctx.arcTo(cx0 + carW, cy0 + carH, cx0, cy0 + carH, r);
+  ctx.arcTo(cx0, cy0 + carH, cx0, cy0, r);
+  ctx.arcTo(cx0, cy0, cx0 + carW, cy0, r);
+  ctx.closePath();
+  ctx.fillStyle = bodyGradient;
+  ctx.fill();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "rgba(0,0,0,0.25)";
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(20,20,20,0.85)";
+  const wheelW = carW * 0.16;
+  const wheelH = carH * 0.22;
+  ctx.fillRect(cx0 - wheelW * 0.3, cy0 + carH * 0.18, wheelW, wheelH);
+  ctx.fillRect(cx0 + carW - wheelW * 0.7, cy0 + carH * 0.18, wheelW, wheelH);
+  ctx.fillRect(cx0 - wheelW * 0.3, cy0 + carH * 0.62, wheelW, wheelH);
+  ctx.fillRect(cx0 + carW - wheelW * 0.7, cy0 + carH * 0.62, wheelW, wheelH);
+
+  const wsX = cx0 + carW * 0.16;
+  const wsY = cy0 + carH * 0.16;
+  const wsW = carW * 0.68;
+  const wsH = carH * 0.24;
+  const glassGradient = ctx.createLinearGradient(0, wsY, 0, wsY + wsH);
+  glassGradient.addColorStop(0, "rgba(220,240,255,0.55)");
+  glassGradient.addColorStop(1, "rgba(140,180,220,0.3)");
+  const wr = 4;
+  ctx.beginPath();
+  ctx.moveTo(wsX + wr, wsY);
+  ctx.arcTo(wsX + wsW, wsY, wsX + wsW, wsY + wsH, wr);
+  ctx.arcTo(wsX + wsW, wsY + wsH, wsX, wsY + wsH, wr);
+  ctx.arcTo(wsX, wsY + wsH, wsX, wsY, wr);
+  ctx.arcTo(wsX, wsY, wsX + wsW, wsY, wr);
+  ctx.closePath();
+  ctx.fillStyle = glassGradient;
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(255,250,210,0.9)";
+  const lightR = carW * 0.07;
+  ctx.beginPath();
+  ctx.arc(cx0 + carW * 0.22, cy0 + carH * 0.08, lightR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx0 + carW * 0.78, cy0 + carH * 0.08, lightR, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function failMessage(reason: FailReason | null): string {
   switch (reason) {
     case "red-collision": return "The red car hit a square.";
@@ -81,7 +231,10 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
     const state = stateRef.current;
     if (!state) return;
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#0e3a20";
+    const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+    bgGradient.addColorStop(0, "#0b2e19");
+    bgGradient.addColorStop(1, "#153f24");
+    ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
 
     const laneW = width / 4;
@@ -118,12 +271,9 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
               const cx = laneCenterX(road, lane);
               const alpha = 1 - progress;
               const r = laneW * 0.22 * (1 + progress * 0.7);
+              drawCoin(ctx, cx, carY, r, "", alpha);
               ctx.save();
               ctx.globalAlpha = alpha;
-              ctx.beginPath();
-              ctx.fillStyle = "#f2a93a";
-              ctx.arc(cx, carY, r, 0, Math.PI * 2);
-              ctx.fill();
               ctx.font = "700 15px system-ui, sans-serif";
               ctx.textAlign = "center";
               ctx.fillStyle = "white";
@@ -143,36 +293,9 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
           if (!shape) continue;
           const cx = laneCenterX(road, lane);
           if (shape === "circle") {
-            ctx.beginPath();
-            ctx.fillStyle = "#f2a93a";
-            ctx.arc(cx, objY, laneW * 0.22, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = "rgba(255,255,255,0.5)";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.font = "700 13px system-ui, sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillStyle = "#2a1a05";
-            ctx.fillText(String(event.coinValue), cx, objY + 1);
-            ctx.textBaseline = "alphabetic";
+            drawCoin(ctx, cx, objY, laneW * 0.22, String(event.coinValue), 1);
           } else {
-            const s = laneW * 0.38;
-            ctx.fillStyle = "#c23b3b";
-            ctx.strokeStyle = "rgba(255,255,255,0.5)";
-            ctx.lineWidth = 2;
-            const rx = cx - s / 2;
-            const ry = objY - s / 2;
-            const r = 6;
-            ctx.beginPath();
-            ctx.moveTo(rx + r, ry);
-            ctx.arcTo(rx + s, ry, rx + s, ry + s, r);
-            ctx.arcTo(rx + s, ry + s, rx, ry + s, r);
-            ctx.arcTo(rx, ry + s, rx, ry, r);
-            ctx.arcTo(rx, ry, rx + s, ry, r);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
+            drawObstacle(ctx, cx, objY, laneW * 0.38);
           }
         }
       }
@@ -184,20 +307,7 @@ export function DualDriveApp({ onExit }: { onExit: () => void }) {
       const carX = laneCenterX(road, 0) + (laneCenterX(road, 1) - laneCenterX(road, 0)) * visualLaneRef.current[road];
       const carW = laneW * 0.52;
       const carH = carW * 1.5;
-      ctx.fillStyle = CAR_COLORS[road];
-      const cx0 = carX - carW / 2;
-      const cy0 = carY - carH / 2;
-      const r = 10;
-      ctx.beginPath();
-      ctx.moveTo(cx0 + r, cy0);
-      ctx.arcTo(cx0 + carW, cy0, cx0 + carW, cy0 + carH, r);
-      ctx.arcTo(cx0 + carW, cy0 + carH, cx0, cy0 + carH, r);
-      ctx.arcTo(cx0, cy0 + carH, cx0, cy0, r);
-      ctx.arcTo(cx0, cy0, cx0 + carW, cy0, r);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
-      ctx.fillRect(cx0 + carW * 0.18, cy0 + carH * 0.18, carW * 0.64, carH * 0.22);
+      drawCar(ctx, carX, carY, carW, carH, CAR_COLORS[road]);
     }
 
     // HUD
