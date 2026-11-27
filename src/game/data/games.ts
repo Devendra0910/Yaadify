@@ -44,10 +44,10 @@ export const GAME_NODES: GameNode[] = [
   { id: "memomart", name: "MemoMart", emoji: "🛒", unlockScore: 0, playable: true, connectsTo: null, angleDeg: 0, radius: 0 },
   // Spoked ring nodes — connect to MemoMart and to their two ring neighbours.
   // "6 Senses" lineup: this slot was ChooseMax, then Time Detective, then
-  // Pulse, now Projectile Catch (the Time-sense ring game) — earlier
-  // occupants' code stays on disk, just unhooked from App.tsx, in case any
-  // of them is ever brought back.
-  { id: "projectilecatch", name: "Projectile Catch", emoji: "⚾", unlockScore: 500, playable: true, connectsTo: "memomart", angleDeg: 90, radius: RING_RADIUS },
+  // Pulse, then Projectile Catch, now Invisible Catch (the Time-sense ring
+  // game) — earlier occupants' code stays on disk, just unhooked from
+  // App.tsx, in case any of them is ever brought back.
+  { id: "invisiblecatch", name: "Invisible Catch", emoji: "👻", unlockScore: 500, playable: true, connectsTo: "memomart", angleDeg: 90, radius: RING_RADIUS },
   { id: "game3", name: "MindFlip", emoji: "🔀", unlockScore: 200, playable: true, connectsTo: "memomart", angleDeg: 330, radius: RING_RADIUS },
   // FactFlip reverted to a locked placeholder — reserved for a future
   // Balance-sense game. FactFlip's own code stays on disk, unhooked from
@@ -64,7 +64,7 @@ export const GAME_NODES: GameNode[] = [
     angleDeg: 150,
     radius: RING_RADIUS,
     drawParentLine: false,
-    extraConnections: ["projectilecatch", "game4"],
+    extraConnections: ["invisiblecatch", "game4"],
   },
   {
     id: "game6",
@@ -76,7 +76,7 @@ export const GAME_NODES: GameNode[] = [
     angleDeg: 30,
     radius: RING_RADIUS,
     drawParentLine: false,
-    extraConnections: ["projectilecatch", "game3"],
+    extraConnections: ["invisiblecatch", "game3"],
   },
   {
     id: "game7",

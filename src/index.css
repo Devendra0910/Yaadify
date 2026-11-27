@@ -1641,3 +1641,138 @@ body {
   max-height: 86vh;
   overflow-y: auto;
 }
+
+/* ---------- Invisible Catch ---------- */
+
+.ic-game-overlay {
+  background: linear-gradient(160deg, #eef1f9 0%, #dfe4f3 100%);
+}
+
+.ic-hud {
+  margin-bottom: 4px;
+}
+
+.ic-play-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-height: 0;
+  padding: 0 16px;
+  cursor: pointer;
+}
+
+.ic-track-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 40px;
+}
+
+.ic-target {
+  position: absolute;
+  top: 0;
+  bottom: 14px;
+  width: 2px;
+  background: repeating-linear-gradient(180deg, #1b6b3a 0, #1b6b3a 6px, transparent 6px, transparent 11px);
+  transform: translateX(-50%);
+}
+
+.ic-target-dot {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1b6b3a;
+  box-shadow: 0 0 0 4px rgba(27, 107, 58, 0.2);
+}
+
+.ic-track {
+  position: relative;
+  width: 100%;
+  height: 28px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #d7dced 0%, #c3c9e0 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  overflow: visible;
+}
+
+.ic-hidden-region {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  border-radius: 10px;
+  background: #2a2f45;
+  transition: opacity 0.25s ease;
+}
+
+.ic-hidden-region--revealed {
+  opacity: 0.18;
+}
+
+.ic-ball {
+  position: absolute;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  margin-left: -18px;
+  margin-top: -18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe08a 0%, #f2a93a 55%, #b5700f 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: left 0.05s linear;
+}
+
+.ic-ball--hit {
+  box-shadow: 0 0 0 5px rgba(27, 107, 58, 0.35), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.ic-ball--miss {
+  box-shadow: 0 0 0 5px rgba(176, 44, 40, 0.35), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.ic-reveal {
+  min-height: 50px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.ic-reveal-good {
+  color: #1b6b3a;
+}
+
+.ic-reveal-bad {
+  color: var(--color-danger-dark);
+}
+
+.ic-reveal-detail {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.ic-reveal-placeholder {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.ic-stop-wrap {
+  padding: 4px 2px calc(var(--safe-bottom) + 4px);
+}
+
+.ic-stop-btn {
+  min-height: 64px;
+  font-size: 20px;
+  letter-spacing: 1px;
+}
+
+.ic-results-card {
+  width: 100%;
+  max-width: 380px;
+  max-height: 86vh;
+  overflow-y: auto;
+}

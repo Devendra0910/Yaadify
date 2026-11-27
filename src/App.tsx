@@ -10,7 +10,7 @@ import { ShoppingGrid } from "./ui/screens/ShoppingGrid";
 import { GameOverScreen } from "./ui/screens/GameOverScreen";
 import { PauseMenu } from "./ui/screens/PauseMenu";
 import { MindFlipApp } from "./ui/screens/mindflip/MindFlipApp";
-import { ProjectileCatchApp } from "./ui/screens/projectileCatch/ProjectileCatchApp";
+import { InvisibleCatchApp } from "./ui/screens/invisibleCatch/InvisibleCatchApp";
 import { SoundDetectiveApp } from "./ui/screens/soundDetective/SoundDetectiveApp";
 import { detectiveBest, loadDetective, resetDetective, SOUND_DETECTIVE_ID } from "./game/soundDetective/save";
 import { DualDriveApp } from "./ui/screens/dualDrive/DualDriveApp";
@@ -20,7 +20,7 @@ import { gameBridge, BridgeEvents } from "./game/GameBridge";
 import { GAME_NODES, isGameUnlocked } from "./game/data/games";
 import { SaveSystem } from "./game/systems/SaveSystem";
 import { MindFlipSave, mindflipHubScore } from "./game/systems/MindFlipSave";
-import { ProjectileCatchSave, projectileCatchHubScore } from "./game/systems/ProjectileCatchSave";
+import { InvisibleCatchSave, invisibleCatchHubScore } from "./game/systems/InvisibleCatchSave";
 import { SoundManager } from "./game/systems/SoundManager";
 import type {
   GameOverPayload,
@@ -33,12 +33,12 @@ import type {
   ShoppingTickPayload,
 } from "./game/types";
 
-type Screen = "loading" | "hub" | "menu" | "memorize" | "shopping" | "gameOver" | "mindflip" | "projectileCatch" | "soundDetective" | "dualDrive";
+type Screen = "loading" | "hub" | "menu" | "memorize" | "shopping" | "gameOver" | "mindflip" | "invisibleCatch" | "soundDetective" | "dualDrive";
 
 function loadGameScores() {
   return readHubScores({
     memomart: SaveSystem.load().bestRunScore,
-    projectilecatch: projectileCatchHubScore(ProjectileCatchSave.load()),
+    invisiblecatch: invisibleCatchHubScore(InvisibleCatchSave.load()),
     game3: mindflipHubScore(MindFlipSave.load()),
     [SOUND_DETECTIVE_ID]: detectiveBest(loadDetective()),
     [DUAL_DRIVE_ID]: dualDriveHubScore(DualDriveSave.load()),
@@ -186,7 +186,7 @@ export default function App() {
       pauseGame();
     } else if (screen === "soundDetective") {
       leaveDetective();
-    } else if (screen === "menu" || screen === "mindflip" || screen === "projectileCatch" || screen === "dualDrive") {
+    } else if (screen === "menu" || screen === "mindflip" || screen === "invisibleCatch" || screen === "dualDrive") {
       setScreen("hub");
     } else if (screen === "hub" && Capacitor.isNativePlatform()) {
       void CapacitorApp.exitApp();
@@ -254,7 +254,7 @@ export default function App() {
           totalScore={totalScore}
           onSelectGame={(gameId) => {
             if (gameId === "memomart") setScreen("menu");
-            else if (gameId === "projectilecatch") setScreen("projectileCatch");
+            else if (gameId === "invisiblecatch") setScreen("invisibleCatch");
             else if (gameId === "game3") setScreen("mindflip");
             else if (gameId === SOUND_DETECTIVE_ID) setScreen("soundDetective");
             else if (gameId === DUAL_DRIVE_ID) setScreen("dualDrive");
@@ -262,7 +262,7 @@ export default function App() {
           onLockedTap={showHubMessage}
           onResetAll={() => {
             SaveSystem.reset();
-            ProjectileCatchSave.reset();
+            InvisibleCatchSave.reset();
             MindFlipSave.reset();
             resetDetective();
             DualDriveSave.reset();
@@ -276,7 +276,7 @@ export default function App() {
 
       {screen === "mindflip" && <MindFlipApp onExit={() => setScreen("hub")} />}
 
-      {screen === "projectileCatch" && <ProjectileCatchApp onExit={() => setScreen("hub")} />}
+      {screen === "invisibleCatch" && <InvisibleCatchApp onExit={() => setScreen("hub")} />}
 
       {screen === "dualDrive" && <DualDriveApp onExit={() => setScreen("hub")} />}
 
